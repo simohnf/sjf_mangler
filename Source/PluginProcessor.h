@@ -146,7 +146,7 @@ public:
     sjf_phasor phaseRamp;
     
     float getDuration() { return duration; };
-    std::vector<float> revPat, speedPat, subDivPat, trailPat, ampPat;
+    std::vector<float> revPat, speedPat, subDivPat, trailPat, ampPat, stepPat;
     
 private:
     juce::AudioBuffer<float> AudioSample;
@@ -228,19 +228,25 @@ public:
             speedVal *= 5;
             if ( speedVal < 0.5 ) { speedVal = 1; }
             
+//            STEP LOGIC
+            auto readStep = stepPat[currentStep];
             
-            //            REVERSE LOGIC
-            if ( revPat[currentStep] < 0.25 ) { pos =  (currentStep + (phaseWrap * speedVal)) * subDivLenSamps; }
-            else { pos = ( (currentStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps; }
+//            REVERSE LOGIC
+            if ( revPat[readStep] < 0.25 ) { pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps; }
+            else { pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps; }
             
 //            JUST RECHECK POSITION FOR SAFETY
             if (pos < 0 ) { pos += duration; }
             else if (pos >= duration) { pos -= duration; }
             
 
+//            AMPLITUDE Pattern LOGIC
+            float amp = ampPat[currentStep];
+            
             for (int channel = 0; channel < numChannels; channel ++)
             {
                 auto val = cubicInterpolate(AudioSample, channel % AudioSample.getNumChannels(), pos);
+                val *= amp;
                 val *= phaseEnv(phaseWrap, subDivLenSamps, envLen); // apply amplitude envelope
                 buffer.setSample(channel, index, val);
             }
@@ -254,6 +260,7 @@ public:
         subDivPat.resize(nSteps);
         trailPat.resize(nSteps);
         ampPat.resize(nSteps);
+        stepPat.resize(nSteps);
         for (int index = 0; index < nSteps; index++)
         {
             revPat[index] = pow( rand01(), 50 );
@@ -261,6 +268,7 @@ public:
             subDivPat[index] = pow( rand01(), 50 );
             ampPat[index] = 1.0f - pow( rand01(), 10 );
             trailPat[index] = pow( rand01(), 50 );
+            stepPat[index] = floor(rand01() * nSteps);
         }
     }
 //==============================================================================
