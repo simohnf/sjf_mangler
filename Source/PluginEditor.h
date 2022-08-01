@@ -32,7 +32,7 @@ private:
     
 
     
-    juce::TextButton openButton, playButton;
+    juce::TextButton openButton, playButton, stopButton;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };

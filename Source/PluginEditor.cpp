@@ -24,6 +24,10 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     playButton.setButtonText ("Play");
     playButton.onClick = [this] { audioProcessor.playButtonClicked() ;};
     
+    addAndMakeVisible (stopButton);
+    stopButton.setButtonText ("Stop");
+    stopButton.onClick = [this] { audioProcessor.stopButtonClicked() ;};
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
@@ -49,6 +53,7 @@ void Sjf_manglerAudioProcessorEditor::resized()
 {
     openButton.setBounds(100, 100, 100, 20);
     playButton.setBounds(100, 140, 100, 20);
+    stopButton.setBounds(100, 180, 100, 20);
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 }

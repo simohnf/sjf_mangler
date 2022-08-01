@@ -165,7 +165,8 @@ private:
 public:
     void loadSample()
     {
-        canPlay = false;
+//        canPlay = false;
+
             chooser = std::make_unique<juce::FileChooser> ("Select a Wave file shorter than 2 seconds to play...",
                                                            juce::File{},
                                                            "*.wav");
@@ -183,15 +184,30 @@ public:
                                       
                                       if (reader.get() != nullptr)
                                       {
+//                                          juce::AudioBuffer<float> tempBuffer;
+//                                          tempBuffer.clear();
+//                                          tempBuffer.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
+//                                          duration = tempBuffer.getNumSamples();
+//                                          reader->read (&tempBuffer, 0, (int) reader->lengthInSamples, 0, true, true);
+//                                          read_pos = 0;
+//                                          sliceLenSamps = duration/nSlices;
+//                                          AudioSample.makeCopyOf( tempBuffer );
+//                                          tempBuffer.setSize(0, 0);
+//                                          setPatterns();
+
+//                                          juce::AudioBuffer<float> tempBuffer;
                                           AudioSample.clear();
                                           AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
                                           duration = AudioSample.getNumSamples();
                                           reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
                                           read_pos = 0;
                                           sliceLenSamps = duration/nSlices;
-                                      }
-                                      setPatterns();
+//                                          AudioSample.makeCopyOf( tempBuffer );
+//                                          tempBuffer.setSize(0, 0);
+                                          setPatterns();                                      }
+                                      
                                   });
+
     };
 //==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
@@ -280,12 +296,6 @@ public:
         {
             // start subdivision at a fraction of max, raise to maximum for last division
             subDivAmp = 1.0f / (subDiv - subDivCount);
-        }
-        if (preSubDivAmp != subDivAmp){
-            preSubDivAmp = subDivAmp;
-            DBG( "SUBDIVAMP" << subDivAmp) ;
-            DBG("subDiv " << subDiv);
-            DBG("subDivCOunt " << subDivCount);
         }
         return subDivAmp;
     };
@@ -393,7 +403,8 @@ public:
         sampleMangler.canPlay = false;
         sampleMangler.loadSample() ;
     };
-    void playButtonClicked () { sampleMangler.canPlay = true; ; };
+    void playButtonClicked () { sampleMangler.canPlay = true; };
+    void stopButtonClicked()  { sampleMangler.canPlay = false; };
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
