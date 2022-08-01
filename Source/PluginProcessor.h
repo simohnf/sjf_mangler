@@ -147,6 +147,8 @@ public:
     
     float getDuration() { return duration; };
     std::vector<float> revPat, speedPat, subDivPat, subDivAmpRampPat, ampPat, stepPat;
+    float revProb, speedProb, subDivProb, ampProb, stepShuffleProb;
+    bool revFlag, speedFlag, subDivFlag, ampFlag, stepShuffleFlag, randomOnLoopFlag;
     
 private:
     juce::AudioBuffer<float> AudioSample;
@@ -159,6 +161,7 @@ private:
     int lastStep = -1;
     float subDivCount = 0.0f;
     float preSubDivAmp = 0;
+    
     
     
     
@@ -229,14 +232,16 @@ public:
         {
             int currentStep = floor(phaseOut[index]);
 
-            if ( currentStep != lastStep ){
+            if ( currentStep != lastStep )
+            {
+// This is just to randomise patterns at the start of each loop
+                if (currentStep == 0 && randomOnLoopFlag)
+                {
+                    randomiseAll();
+                }
                 lastStep = currentStep;
                 subDivCount = 0;
-                //            This is just to randomise patterns at the start of each loop
-                if (currentStep == 0 )
-                {
-                    setPatterns();
-                }
+                checkPatternRandomisationFlags();
             }
             
             
@@ -341,19 +346,28 @@ public:
         stepPat.resize(nSteps);
         for (int index = 0; index < nSteps; index++)
         {
-            revPat[index] = pow( rand01(), 3 );
-//            revPat[index] = 0;
-            speedPat[index] = pow( rand01(), 3 );
-//            speedPat[index] = 0;
-            subDivPat[index] = pow( rand01(), 3 );
-//            subDivPat[index] = 0;
+//            revPat[index] = pow( rand01(), 3 );
+            revPat[index] = 0;
+//            speedPat[index] = pow( rand01(), 3 );
+            speedPat[index] = 0;
+//            subDivPat[index] = pow( rand01(), 3 );
+            subDivPat[index] = 0;
             subDivAmpRampPat[index] = rand01();
-            ampPat[index] = 1.0f - pow( rand01(), 10 );
-//            ampPat[index] = 1.0f;
-            stepPat[index] = floor(rand01() * nSteps);
-//            stepPat[index] = index;
+//            ampPat[index] = 1.0f - pow( rand01(), 10 );
+            ampPat[index] = 1.0f;
+//            stepPat[index] = floor(rand01() * nSteps);
+            stepPat[index] = index;
         }
-    }
+    };
+//==============================================================================
+    void randomiseAll()
+    {
+        revFlag = true;
+        speedFlag = true;
+        subDivFlag = true;
+        ampFlag = true;
+        stepShuffleFlag = true;
+    };
 //==============================================================================
     void play2(juce::AudioBuffer<float> &buffer)
     {
@@ -379,8 +393,72 @@ public:
         if (read_pos >= duration) { read_pos -= duration; }
         if (read_pos < 0) { read_pos += duration; }
     };
-    
-    float rand01() { return float( rand() ) / float( RAND_MAX ); }
+//==============================================================================
+private:
+    float rand01()
+    {
+        return float( rand() ) / float( RAND_MAX );
+    }
+//==============================================================================
+    void checkPatternRandomisationFlags(){
+        if(revFlag){ setRandRevPat(); revFlag = false;}
+        if(speedFlag) { setRandSpeedPat(); speedFlag = false;}
+        if(subDivFlag) { setRandSubDivPat(); subDivFlag = false;}
+        if(ampFlag) { setRandAmpPat(); ampFlag = false;}
+        if(stepShuffleFlag) { setRandStepPat(); stepShuffleFlag = false;}
+    };
+//==============================================================================
+    void setRandRevPat()
+    {
+        setRandPat(revPat, revProb);
+    };
+//==============================================================================
+    void setRandSpeedPat()
+    {
+        setRandPat(speedPat, speedProb);
+    };
+//==============================================================================
+    void setRandSubDivPat()
+    {
+        setRandPat(subDivPat, subDivProb);
+        for (int index = 0; index < nSteps; index++)
+        {
+            subDivAmpRampPat[index] = rand01();
+        }
+    };
+//==============================================================================
+    void setRandAmpPat()
+    {
+        setRandPat(ampPat, 1 - pow(ampProb, 4));
+    };
+//==============================================================================
+    void setRandStepPat()
+    {
+        stepPat.resize(nSteps);
+        for (int index = 0; index < nSteps; index++)
+        {
+            if(  stepShuffleProb <= rand01() )
+            {
+                stepPat[index] = index;
+            }
+            else
+            {
+                int step = floor(rand01() * nSteps);
+                stepPat[index] = step;
+            }
+        }
+    };
+//==============================================================================
+    void setRandPat(std::vector<float>& pattern, float prob)
+    {
+        pattern.resize(nSteps);
+        auto exponent = (1 - prob) * 20;
+        for (int index = 0; index < nSteps; index++)
+        {
+            if (prob = 0) {pattern[index] = 0;}
+            else {pattern[index] = pow( rand01(), exponent );}
+        }
+    };
 };
 
 //==============================================================================
@@ -439,7 +517,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     
-private:
+public:
         sjf_sampler sampleMangler;
     
     

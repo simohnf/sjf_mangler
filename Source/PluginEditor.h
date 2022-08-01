@@ -32,7 +32,10 @@ private:
     
 
     
-    juce::TextButton openButton, playButton, stopButton;
+    juce::TextButton openButton, playButton, stopButton, randomAllButton;
+    juce::ToggleButton randomOnLoopButton;
+    juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
+    juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };

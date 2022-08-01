@@ -28,6 +28,59 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     stopButton.setButtonText ("Stop");
     stopButton.onClick = [this] { audioProcessor.stopButtonClicked() ;};
     
+    addAndMakeVisible (randomAllButton);
+    randomAllButton.setButtonText ("Randomise All");
+    randomAllButton.onClick = [this] { audioProcessor.sampleMangler.randomiseAll() ;};
+    
+    addAndMakeVisible (randomOnLoopButton);
+    randomOnLoopButton.setButtonText ("Randomise All On Loop");
+    randomOnLoopButton.onClick = [this] { audioProcessor.sampleMangler.randomOnLoopFlag = randomOnLoopButton.getToggleState(); };
+    
+    addAndMakeVisible (revProbSlider);
+    revProbSlider.setRange (0.0f, 1.0f);
+    revProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.revProb = revProbSlider.getValue(); audioProcessor.sampleMangler.revFlag = true; };
+    
+    addAndMakeVisible (revProbLabel);
+    revProbLabel.setText ("RevProb", juce::dontSendNotification);
+    revProbLabel.attachToComponent (&revProbSlider, true);
+    
+    addAndMakeVisible (speedProbSlider);
+    speedProbSlider.setRange (0.0f, 1.0f);
+    speedProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.speedProb = speedProbSlider.getValue(); audioProcessor.sampleMangler.speedFlag = true; };
+    
+    addAndMakeVisible (speedProbLabel);
+    speedProbLabel.setText ("SpeedProb", juce::dontSendNotification);
+    speedProbLabel.attachToComponent (&speedProbSlider, true);
+    
+    addAndMakeVisible (subDivProbSlider);
+    subDivProbSlider.setRange (0.0f, 1.0f);
+    subDivProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.subDivProb = subDivProbSlider.getValue(); audioProcessor.sampleMangler.subDivFlag = true; };
+    
+    addAndMakeVisible (subDivProbLabel);
+    subDivProbLabel.setText ("subDivProb", juce::dontSendNotification);
+    subDivProbLabel.attachToComponent (&subDivProbSlider, true);
+    
+    addAndMakeVisible (ampProbSlider);
+    ampProbSlider.setRange (0.0f, 1.0f);
+    ampProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.ampProb = ampProbSlider.getValue(); audioProcessor.sampleMangler.ampFlag = true; };
+    ampProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.ampProb = ampProbSlider.getValue(); audioProcessor.sampleMangler.ampFlag = true; };
+    
+    addAndMakeVisible (ampProbLabel);
+    ampProbLabel.setText ("ampProb", juce::dontSendNotification);
+    ampProbLabel.attachToComponent (&ampProbSlider, true);
+    
+    addAndMakeVisible (stepShuffleProbSlider);
+    stepShuffleProbSlider.setRange (0.0f, 1.0f);
+    stepShuffleProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.stepShuffleProb = stepShuffleProbSlider.getValue(); audioProcessor.sampleMangler.stepShuffleFlag = true; };
+    
+    addAndMakeVisible (stepShuffleProbLabel);
+    stepShuffleProbLabel.setText ("shuffleProb", juce::dontSendNotification);
+    stepShuffleProbLabel.attachToComponent (&stepShuffleProbSlider, true);
+    
+    
+    
+    
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
@@ -46,14 +99,21 @@ void Sjf_manglerAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+//    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.drawFittedText("sjf_mangler", (getWidth()/2.0f) - 50, 0, 100, 20, juce::Justification::centred, 1);
 }
 
 void Sjf_manglerAudioProcessorEditor::resized()
 {
-    openButton.setBounds(100, 100, 100, 20);
-    playButton.setBounds(100, 140, 100, 20);
+    revProbSlider.setBounds(60, 20, 200, 20);
+    speedProbSlider.setBounds(60, 40, 200, 20);
+    subDivProbSlider.setBounds(60, 60, 200, 20);
+    ampProbSlider.setBounds(60, 80, 200, 20);
+    stepShuffleProbSlider.setBounds(60, 100, 200, 20);
+    
+    openButton.setBounds(100, 140, 100, 20);
+    playButton.setBounds(100, 160, 100, 20);
     stopButton.setBounds(100, 180, 100, 20);
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    randomAllButton.setBounds(100, 200, 100, 20);
+    randomOnLoopButton.setBounds(200, 200, 100, 20);
 }
