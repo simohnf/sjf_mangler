@@ -146,7 +146,7 @@ public:
     sjf_phasor phaseRamp;
     
     float getDuration() { return duration; };
-    std::vector<float> revPat, speedPat, subDivPat, trailPat, ampPat, stepPat;
+    std::vector<float> revPat, speedPat, subDivPat, subDivAmpRampPat, ampPat, stepPat;
     
 private:
     juce::AudioBuffer<float> AudioSample;
@@ -157,6 +157,8 @@ private:
     int SR = 44100;
     float sliceLenSamps;
     int lastStep = -1;
+    float subDivCount = 0.0f;
+    float preSubDivAmp = 0;
     
     
     
@@ -210,42 +212,48 @@ public:
         for (int index = 0; index < bufferSize; index++)
         {
             int currentStep = floor(phaseOut[index]);
-            if (currentStep == 0 && currentStep != lastStep){
-                setPatterns();
+
+            if ( currentStep != lastStep ){
+                lastStep = currentStep;
+                subDivCount = 0;
+                //            This is just to randomise patterns at the start of each loop
+                if (currentStep == 0 )
+                {
+                    setPatterns();
+                }
             }
-            lastStep = currentStep;
+            
+            
             
             float phaseWrap = phaseOut[index] - currentStep;
-            float pos;
-//            SUBDIVISION LOGIC
-            float subDiv = floor(subDivPat[currentStep] * 8) + 1 ;
+            
+//            SUBDIVISION & TRAIL LOGIC
+            float subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
             phaseWrap *= subDiv;
-            while (phaseWrap >= 1) { phaseWrap -= 1; }
+            if (phaseWrap >= 1)
+            {
+                int phaseInt = phaseWrap;
+                phaseWrap -= phaseInt;
+                subDivCount = phaseInt;
+                
+            }
             auto subDivLenSamps = sliceLenSamps/ subDiv;
             
-//            SPEED CHANGE LOGIC
-            auto speedVal = speedPat[currentStep];
-            speedVal *= 5;
-            if ( speedVal < 0.5 ) { speedVal = 1; }
-            
-//            STEP LOGIC
-            auto readStep = stepPat[currentStep];
-            
-//            REVERSE LOGIC
-            if ( revPat[readStep] < 0.25 ) { pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps; }
-            else { pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps; }
-            
-//            JUST RECHECK POSITION FOR SAFETY
-            if (pos < 0 ) { pos += duration; }
-            else if (pos >= duration) { pos -= duration; }
-            
+            auto subDivAmp = calculateSubDivAmp( currentStep, subDiv, subDivCount );
+//            auto subDivAmp = 1.0f;
 
+            auto speedVal = calculateSpeedVal( currentStep );
+//            STEP LOGIC
+            auto readStep = stepPat[currentStep] ;
+
+            float pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
 //            AMPLITUDE Pattern LOGIC
-            float amp = ampPat[currentStep];
+            float amp = calculateAmpValue( currentStep );
             
             for (int channel = 0; channel < numChannels; channel ++)
             {
                 auto val = cubicInterpolate(AudioSample, channel % AudioSample.getNumChannels(), pos);
+                val *= subDivAmp;
                 val *= amp;
                 val *= phaseEnv(phaseWrap, subDivLenSamps, envLen); // apply amplitude envelope
                 buffer.setSample(channel, index, val);
@@ -253,22 +261,87 @@ public:
         }
     }; 
 //==============================================================================
+    float calculateSubDivAmp( int currentStep, float subDiv, float subDivCount )
+    {
+        auto subDivAmp = 1.0f;
+        
+        // if subDiv is one, subDiv amp is 1
+        if (subDiv == 1)
+        {
+            subDivAmp = 1.0f;
+        }
+        // else if subDivPatAmp for current
+        else if ( subDivAmpRampPat[currentStep] < 0.5 )
+        {
+            // start subdivision at max amplitude, drop to a fraction of that
+            subDivAmp = 1.0f / (subDivCount + 1.0f);
+        }
+        else
+        {
+            // start subdivision at a fraction of max, raise to maximum for last division
+            subDivAmp = 1.0f / (subDiv - subDivCount);
+        }
+        if (preSubDivAmp != subDivAmp){
+            preSubDivAmp = subDivAmp;
+            DBG( "SUBDIVAMP" << subDivAmp) ;
+            DBG("subDiv " << subDiv);
+            DBG("subDivCOunt " << subDivCount);
+        }
+        return subDivAmp;
+    };
+//==============================================================================
+
+    float calculateAmpValue(int currentStep) { return ampPat[currentStep]; };
+//==============================================================================
+    float calculateReverseAndPosition(int currentStep, int readStep, float phaseWrap, float subDivLenSamps, float speedVal)
+    {
+        float pos;
+        //            REVERSE LOGIC
+        if ( revPat[currentStep] < 0.25 )
+        {
+            pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps;
+        }
+        else
+        {
+            pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps;
+        }
+        
+        //            JUST RECHECK POSITION FOR SAFETY
+        if (pos < 0 ) { pos += duration; }
+        else if (pos >= duration) { pos -= duration; }
+        
+        return pos;
+    };
+//==============================================================================
+    float calculateSpeedVal( int currentStep )
+    {
+        auto speedVal = speedPat[currentStep] ;
+        speedVal *= 5;
+        if ( speedVal < 0.5 ) { speedVal = 1; }
+        return speedVal;
+    };
+//==============================================================================
     void setPatterns()
     {
         revPat.resize(nSteps);
         speedPat.resize(nSteps);
         subDivPat.resize(nSteps);
-        trailPat.resize(nSteps);
+        subDivAmpRampPat.resize(nSteps);
         ampPat.resize(nSteps);
         stepPat.resize(nSteps);
         for (int index = 0; index < nSteps; index++)
         {
-            revPat[index] = pow( rand01(), 50 );
-            speedPat[index] = pow( rand01(), 50 );
-            subDivPat[index] = pow( rand01(), 50 );
+            revPat[index] = pow( rand01(), 3 );
+//            revPat[index] = 0;
+            speedPat[index] = pow( rand01(), 3 );
+//            speedPat[index] = 0;
+            subDivPat[index] = pow( rand01(), 3 );
+//            subDivPat[index] = 0;
+            subDivAmpRampPat[index] = rand01();
             ampPat[index] = 1.0f - pow( rand01(), 10 );
-            trailPat[index] = pow( rand01(), 50 );
+//            ampPat[index] = 1.0f;
             stepPat[index] = floor(rand01() * nSteps);
+//            stepPat[index] = index;
         }
     }
 //==============================================================================
