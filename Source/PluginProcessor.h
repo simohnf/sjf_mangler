@@ -34,6 +34,51 @@ float phaseEnv( float phase, float period, float envLen){
     
 }
 //==============================================================================
+//==============================================================================
+//==============================================================================
+//==============================================================================
+//==============================================================================
+//==============================================================================
+
+inline
+float cubicInterpolate(std::vector<float> buffer, float read_pos)
+{
+    auto bufferSize = buffer.size();
+    double y0; // previous step value
+    double y1; // this step value
+    double y2; // next step value
+    double y3; // next next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    if (index == 0)
+    {
+        y0 = buffer[ bufferSize - 1 ];
+    }
+    else
+    {
+        y0 = buffer[ index - 1 ];
+    }
+    y1 = buffer[ index % bufferSize ];
+    y2 = buffer[ (index + 1) % bufferSize ];
+    y3 = buffer[ (index + 2) % bufferSize ];
+    double a0,a1,a2,a3,mu2;
+    
+    mu2 = mu*mu;
+    a0 = y3 - y2 - y0 + y1;
+    a1 = y0 - y1 - a0;
+    a2 = y2 - y0;
+    a3 = y1;
+    
+    return (a0*mu*mu2 + a1*mu2 + a2*mu + a3);
+}
+//==============================================================================
 inline
 float cubicInterpolate(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
 {
@@ -72,6 +117,13 @@ float cubicInterpolate(juce::AudioBuffer<float>& buffer, int channel, float read
     
     return (a0*mu*mu2 + a1*mu2 + a2*mu + a3);
 }
+//==============================================================================
+inline
+float rand01()
+{
+    return float( rand() ) / float( RAND_MAX );
+}
+
 //==============================================================================
 //==============================================================================
 //==============================================================================
@@ -138,7 +190,6 @@ public:
     {
         AudioSample.setSize(2, 44100);
         AudioSample.clear();
-        
         formatManager.registerBasicFormats();
     };
     
@@ -146,39 +197,43 @@ public:
     
     void initialise(int sampleRate){ SR  = sampleRate; phaseRamp.setSampleRate( SR ); srand((unsigned)time(NULL)); };
     
-    int nSteps = 16;
-    int nSlices = 16;
-    bool canPlay = false;
+    int nSteps = 16; int nSlices = 16;
     sjf_phasor phaseRamp;
     
-    float getDuration() { return duration; };
+    
     std::vector<float> revPat, speedPat, subDivPat, subDivAmpRampPat, ampPat, stepPat;
-    float revProb, speedProb, subDivProb, ampProb, stepShuffleProb;
-    bool revFlag, speedFlag, subDivFlag, ampFlag, stepShuffleFlag, randomOnLoopFlag, syncToHostFlag;
+    float revProb = 0; float speedProb = 0; float subDivProb = 0; float ampProb = 0; float stepShuffleProb = 0;
+    bool canPlay = false; bool randomOnLoopFlag = false; bool syncToHostFlag = false;
+    bool revFlag = false; bool speedFlag = false; bool speedRampFlag = true;
+    bool subDivFlag = false; bool ampFlag = false; bool stepShuffleFlag = false;
+    
 
     float hostSyncCompenstation = 1.0f;
+    float sampleDivNoteValue = 1;
     
 private:
     juce::AudioBuffer<float> AudioSample;
-    std::unique_ptr<juce::FileChooser> chooser;
     juce::AudioFormatManager formatManager;
+    std::unique_ptr<juce::FileChooser> chooser;
+    
     float read_pos = 0;
     float duration = 44100;
-    int SR = 44100;
-    float sliceLenSamps;
-    int lastStep = -1;
     float subDivCount = 0.0f;
     float preSubDivAmp = 0;
     float hostBPM = 120;
+    float sliceLenSamps;
+    int SR = 44100;
+    int lastStep = -1;
+    float phaseRateMultiplier = 1;
     
-    
-    
+
     
 public:
+//==============================================================================
+    float getDuration() { return duration; };
+//==============================================================================
     void loadSample()
     {
-//        canPlay = false;
-
             chooser = std::make_unique<juce::FileChooser> ("Select a Wave file shorter than 2 seconds to play...",
                                                            juce::File{},
                                                            "*.wav");
@@ -188,25 +243,66 @@ public:
             chooser->launchAsync (chooserFlags, [this] (const juce::FileChooser& fc)
                                   {
                                       auto file = fc.getResult();
-                                      
-                                      if (file == juce::File{})
-                                          return;
-                                      
+                                      if (file == juce::File{}) { return; }
                                       std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (file));
-                                      
                                       if (reader.get() != nullptr)
                                       {
-
                                           AudioSample.clear();
                                           AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
                                           duration = AudioSample.getNumSamples();
                                           reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
                                           read_pos = 0;
                                           sliceLenSamps = duration/nSlices;
-                                          setPatterns();                                      }
-                                      
+                                          setPatterns();
+                                      }
                                   });
-
+    };
+//==============================================================================
+    void setNumSlices(int slices){
+        nSlices = slices;
+        sliceLenSamps = duration/nSlices;
+        setPatterns();
+    };
+//==============================================================================
+    int getNumSlices(){
+        return nSlices;
+    };
+//==============================================================================
+    void setNumSteps(int steps){
+        revPat.resize(steps);
+        speedPat.resize(steps);
+        subDivPat.resize(steps);
+        subDivAmpRampPat.resize(steps);
+        ampPat.resize(steps);
+        stepPat.resize(steps);
+        if (steps > nSteps)
+        for (int index = nSteps; index < steps; index++)
+        {
+            revPat[index] = 0;
+            speedPat[index] = 0;
+            subDivPat[index] = 0;
+            subDivAmpRampPat[index] = rand01();
+            ampPat[index] = 1.0f;
+            stepPat[index] = index % nSlices;
+        }
+        nSteps = steps;
+    };
+//==============================================================================
+    int getNumSteps(){
+        return nSteps;
+    };
+//==============================================================================
+    void setPhaseRateMultiplierIndex(int i)
+    {
+        phaseRateMultiplier = pow(2, i-2);
+        hostSyncCompenstation *= phaseRateMultiplier;
+//        sliceLenSamps *= phaseRateMultiplier;
+//        nSlices /= phaseRateMultiplier;
+    };
+//==============================================================================
+    int getPhaseRateMultiplierIndex()
+    {
+        return 2+ log10(phaseRateMultiplier)/log10(2);
     };
 //==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
@@ -225,60 +321,112 @@ public:
             phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
         }
 
-        
         for (int index = 0; index < bufferSize; index++)
         {
-            int currentStep = floor(phaseOut[index]);
-
-            if ( currentStep != lastStep )
-            {
-// This is just to randomise patterns at the start of each loop
-                if (currentStep == 0 && randomOnLoopFlag)
-                {
-                    randomiseAll();
-                }
-                lastStep = currentStep;
-                subDivCount = 0;
-                checkPatternRandomisationFlags();
-            }
-            
-            
-            
-            float phaseWrap = phaseOut[index] - currentStep;
-            
-//            SUBDIVISION & TRAIL LOGIC
-            float subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
-            phaseWrap *= subDiv;
-            if (phaseWrap >= 1)
-            {
-                int phaseInt = phaseWrap;
-                phaseWrap -= phaseInt;
-                subDivCount = phaseInt;
-                
-            }
-            auto subDivLenSamps = sliceLenSamps/ subDiv;
-            
+            auto currentStep = checkForChangeOfBeat( floor(phaseOut[index]) );
+            auto subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
+            auto phaseWrap = calculatePhaseWrap( (phaseOut[index] - currentStep), subDiv );
+            auto subDivLenSamps = sliceLenSamps / subDiv;
             auto subDivAmp = calculateSubDivAmp( currentStep, subDiv, subDivCount );
-//            auto subDivAmp = 1.0f;
-
-            auto speedVal = calculateSpeedVal( currentStep );
-//            STEP LOGIC
+            auto speedVal = calculateSpeedVal( currentStep, phaseOut[index] );
             auto readStep = stepPat[currentStep] ;
-
-            float pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
-//            AMPLITUDE Pattern LOGIC
-            float amp = calculateAmpValue( currentStep );
-            
+            auto pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
+            auto amp = calculateAmpValue( currentStep );
             for (int channel = 0; channel < numChannels; channel ++)
             {
                 auto val = cubicInterpolate(AudioSample, channel % AudioSample.getNumChannels(), pos);
-                val *= subDivAmp;
-                val *= amp;
-                val *= phaseEnv(phaseWrap, subDivLenSamps, envLen); // apply amplitude envelope
+                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
+                val *= phaseEnv( (phaseOut[index] - currentStep), sliceLenSamps, 2* envLen); // this extra envelope is just to fade on each step
                 buffer.setSample(channel, index, val);
             }
         }
     }; 
+
+//==============================================================================
+    void syncToHost(float bpm){
+        hostBPM = bpm;
+        
+        if (!syncToHostFlag) { hostSyncCompenstation = phaseRateMultiplier ; return; }
+        
+        auto sliceLenSec = sliceLenSamps/SR;
+        auto sampleBPM = 60000.0f / sliceLenSec;
+        if ( sampleBPM == hostBPM ){
+            hostSyncCompenstation = 1;
+            sampleDivNoteValue = 1;
+            return;
+        }
+        else if ( sampleBPM < hostBPM )
+        {
+            while (sampleBPM < hostBPM){ sampleBPM *= 2; }
+            float lastDiff = abs(hostBPM - sampleBPM);
+            auto halfSampleBPM = sampleBPM * 0.5;
+            
+            auto newDiff = abs(halfSampleBPM - hostBPM);
+            if ( newDiff < lastDiff) { sampleBPM = halfSampleBPM;}
+        }
+        else
+        {
+            while (sampleBPM > hostBPM){
+                sampleBPM *= 0.5;
+            }
+            float lastDiff = abs(sampleBPM - hostBPM);
+            auto twiceSampleBPM = sampleBPM * 2;
+            auto newDiff = abs(hostBPM - twiceSampleBPM);
+            if (newDiff < lastDiff ) { sampleBPM = twiceSampleBPM;}
+        }
+        sampleBPM /= phaseRateMultiplier;
+        
+        auto sampleQuarterLenSamps = 60.0 * (double)SR/sampleBPM;
+        if (sampleQuarterLenSamps > sliceLenSamps)
+        {
+            sampleDivNoteValue = round( sampleQuarterLenSamps / sliceLenSamps );
+        }
+        else
+        {
+            sampleDivNoteValue = round( sliceLenSamps / sampleQuarterLenSamps );
+            sampleDivNoteValue = 1.0f / (float)sampleDivNoteValue;
+        }
+        
+        hostSyncCompenstation = hostBPM / ( sampleBPM );
+    };
+//==============================================================================
+    void randomiseAll()
+    {
+        revFlag = true;
+        speedFlag = true;
+        subDivFlag = true;
+        ampFlag = true;
+        stepShuffleFlag = true;
+    };
+//==============================================================================
+private:
+    int checkForChangeOfBeat(int currentStep)
+    {
+        if ( currentStep != lastStep )
+        {   // This is just to randomise patterns at the start of each loop
+            if (currentStep == 0 && randomOnLoopFlag)
+            {
+                randomiseAll();
+            }
+            lastStep = currentStep;
+            subDivCount = 0;
+            checkPatternRandomisationFlags();
+        }
+        return currentStep;
+    };
+//==============================================================================
+    float calculatePhaseWrap(float phaseWrap, float subDiv){
+
+        //            SUBDIVISION & TRAIL LOGIC
+        phaseWrap *= subDiv;
+        if (phaseWrap >= 1)
+        {
+            int phaseInt = phaseWrap;
+            phaseWrap -= phaseInt;
+            subDivCount = phaseInt;
+        }
+        return phaseWrap;
+    };
 //==============================================================================
     float calculateSubDivAmp( int currentStep, float subDiv, float subDivCount )
     {
@@ -320,15 +468,17 @@ public:
         }
         
         //            JUST RECHECK POSITION FOR SAFETY
-        if (pos < 0 ) { pos += duration; }
-        else if (pos >= duration) { pos -= duration; }
+        while (pos < 0 ) { pos += duration; }
+        while (pos >= duration) { pos -= duration; }
         
         return pos;
     };
 //==============================================================================
-    float calculateSpeedVal( int currentStep )
+    float calculateSpeedVal( int currentStep, float stepPhase )
     {
-        auto speedVal = speedPat[currentStep] ;
+        float speedVal = 1;
+        if (!speedRampFlag) { speedVal = speedPat[currentStep] ; }
+        else { speedVal = cubicInterpolate(speedPat, stepPhase); }
         speedVal *= 5;
         if ( speedVal < 0.5 ) { speedVal = 1; }
         return speedVal;
@@ -344,95 +494,14 @@ public:
         stepPat.resize(nSteps);
         for (int index = 0; index < nSteps; index++)
         {
-//            revPat[index] = pow( rand01(), 3 );
             revPat[index] = 0;
-//            speedPat[index] = pow( rand01(), 3 );
             speedPat[index] = 0;
-//            subDivPat[index] = pow( rand01(), 3 );
             subDivPat[index] = 0;
             subDivAmpRampPat[index] = rand01();
-//            ampPat[index] = 1.0f - pow( rand01(), 10 );
             ampPat[index] = 1.0f;
-//            stepPat[index] = floor(rand01() * nSteps);
-            stepPat[index] = index;
+            stepPat[index] = index % nSlices;
         }
     };
-//==============================================================================
-    void randomiseAll()
-    {
-        revFlag = true;
-        speedFlag = true;
-        subDivFlag = true;
-        ampFlag = true;
-        stepShuffleFlag = true;
-    };
-//==============================================================================
-    void play2(juce::AudioBuffer<float> &buffer)
-    {
-        auto bufferSize = buffer.getNumSamples();
-        auto numChannels = buffer.getNumChannels();
-        
-        
-        for (int index = 0; index < bufferSize; index++)
-        {
-            for (int channel = 0; channel < numChannels; channel ++)
-            {
-                auto pos = read_pos + index;
-                if (pos >= duration) { pos -= duration ; }
-                if (pos < 0) { pos += duration; }
-                
-                auto ch = channel % AudioSample.getNumChannels();
-                auto val = AudioSample.getSample( ch, pos );
-                
-                buffer.setSample(channel, index, val);
-            }
-        }
-        read_pos += bufferSize;
-        if (read_pos >= duration) { read_pos -= duration; }
-        if (read_pos < 0) { read_pos += duration; }
-    };
-//==============================================================================
-    void syncToHost(float bpm){
-        hostBPM = bpm;
-        
-        if (!syncToHostFlag) { hostSyncCompenstation = 1 ; return; }
-        
-        auto sampleBeatLenSec = sliceLenSamps/SR;
-        auto sampleBPM = 60000.0f / sampleBeatLenSec;
-        if ( sampleBPM == hostBPM ){
-            hostSyncCompenstation = 1;
-            return;
-        }
-        else if ( sampleBPM < hostBPM )
-        {
-            while (sampleBPM < hostBPM){
-                sampleBPM *= 2;
-            }
-            float lastDiff = abs(hostBPM - sampleBPM);
-            auto halfSampleBPM = sampleBPM * 0.5;
-            
-            auto newDiff = abs(halfSampleBPM - hostBPM);
-            if ( newDiff < lastDiff) { sampleBPM = halfSampleBPM;}
-        }
-        else
-        {
-            while (sampleBPM > hostBPM){
-                sampleBPM *= 0.5;
-            }
-            float lastDiff = abs(sampleBPM - hostBPM);
-            auto twiceSampleBPM = sampleBPM * 2;
-            auto newDiff = abs(hostBPM - twiceSampleBPM);
-            if (newDiff < lastDiff ) { sampleBPM = twiceSampleBPM;}
-        }
-        hostSyncCompenstation = hostBPM / sampleBPM;
-    };
-//==============================================================================
-    
-private:
-    float rand01()
-    {
-        return float( rand() ) / float( RAND_MAX );
-    }
 //==============================================================================
     void checkPatternRandomisationFlags(){
         if(revFlag){ setRandRevPat(); revFlag = false;}
@@ -444,17 +513,17 @@ private:
 //==============================================================================
     void setRandRevPat()
     {
-        setRandPat(revPat, revProb);
+        setRandPat(revPat, revProb/100.0f);
     };
 //==============================================================================
     void setRandSpeedPat()
     {
-        setRandPat(speedPat, speedProb);
+        setRandPat(speedPat, speedProb/100.0f);
     };
 //==============================================================================
     void setRandSubDivPat()
     {
-        setRandPat(subDivPat, subDivProb);
+        setRandPat(subDivPat, subDivProb/100.0f);
         for (int index = 0; index < nSteps; index++)
         {
             subDivAmpRampPat[index] = rand01();
@@ -463,7 +532,7 @@ private:
 //==============================================================================
     void setRandAmpPat()
     {
-        setRandPat(ampPat, 1 - pow(ampProb, 4));
+        setRandPat(ampPat, 1 - pow(ampProb/100.0f, 4));
     };
 //==============================================================================
     void setRandStepPat()
@@ -471,7 +540,7 @@ private:
         stepPat.resize(nSteps);
         for (int index = 0; index < nSteps; index++)
         {
-            if(  stepShuffleProb <= rand01() )
+            if(  stepShuffleProb/100.0f <= rand01() )
             {
                 stepPat[index] = index;
             }
@@ -518,8 +587,7 @@ public:
         sampleMangler.canPlay = false;
         sampleMangler.loadSample() ;
     };
-    void playButtonClicked () { sampleMangler.canPlay = true; };
-    void stopButtonClicked()  { sampleMangler.canPlay = false; };
+    void playButtonClicked (bool play) { sampleMangler.canPlay = play; };
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -561,6 +629,21 @@ private:
     juce::AudioPlayHead* playHead;
     juce::AudioPlayHead::PositionInfo positionInfo;
     
+    juce::AudioProcessorValueTreeState parameters;
+    
+    std::atomic<float>* revParameter = nullptr;
+    std::atomic<float>* divParameter = nullptr;
+    std::atomic<float>* speedParameter = nullptr;
+    std::atomic<float>* ampParameter = nullptr;
+    std::atomic<float>* shuffleParameter = nullptr;
+    
+    std::atomic<int>* nSlicesParameter = nullptr;
+    std::atomic<int>* nStepsParameter = nullptr;
+    
+//    std::atomic<bool>* playParameter = nullptr;
+//    std::atomic<int>*
+    std::atomic<bool>* randOnLoopParameter = nullptr;
+    std::atomic<bool>* syncToHostParameter = nullptr;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessor)
 };

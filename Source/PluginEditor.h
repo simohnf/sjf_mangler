@@ -17,25 +17,33 @@
 class Sjf_manglerAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    Sjf_manglerAudioProcessorEditor (Sjf_manglerAudioProcessor&);
+    Sjf_manglerAudioProcessorEditor (Sjf_manglerAudioProcessor&, juce::AudioProcessorValueTreeState& vts);
     ~Sjf_manglerAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+    typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
+    
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    juce::AudioProcessorValueTreeState& valueTreeState;
     Sjf_manglerAudioProcessor& audioProcessor;
     
     
 
     
-    juce::TextButton openButton, playButton, stopButton, randomAllButton;
-    juce::ToggleButton randomOnLoopButton, hostSyncButton;
+    juce::TextButton openButton, randomAllButton; 
+    juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
+    std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment;
+    std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
+    
+    juce::Slider nSlicesSlider, nStepsSlider;
+    juce::Label nSlicesLabel, nStepsLabel;
+    juce::ComboBox speedChangeBox;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };

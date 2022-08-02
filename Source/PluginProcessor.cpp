@@ -21,6 +21,18 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
                      #endif
                        )
 #endif
+, parameters(*this, nullptr, juce::Identifier("sjf_mangler"),
+             {
+                 std::make_unique<juce::AudioParameterFloat> ("revProb", "Rev", 0.0f, 100.0f, 0.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("speedProb", "Speed", 0.0f, 100.0f, 0.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("divProb", "Div", 0.0f, 100.0f, 0.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("ampProb", "Amp", 0.0f, 100.0f, 0.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("shuffleProb", "Shuffle", 0.0f, 100.0f, 0.0f),
+                 std::make_unique<juce::AudioParameterInt> ("numSteps", "NumSteps", 4, 256, 16),
+                 std::make_unique<juce::AudioParameterInt> ("numSlices", "NumSlices", 4, 256, 16),
+                 std::make_unique<juce::AudioParameterBool> ("randomOnLoop", "RandomOnLoop", false),
+                 std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", false)
+             })
 {
     sampleMangler.initialise( getSampleRate() );
 }
@@ -146,6 +158,16 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         if(positionInfo.getBpm()){
             float bpm = *positionInfo.getBpm();
             if (sampleMangler.canPlay){ sampleMangler.syncToHost(bpm); }
+            if (positionInfo.getIsPlaying())
+            {
+                auto pos = *positionInfo.getPpqPosition();
+                pos *= sampleMangler.sampleDivNoteValue;
+                int posInt = (int)pos;
+                auto leftOver = pos - posInt;
+                posInt %=sampleMangler.nSteps;
+                pos = (posInt + leftOver) / sampleMangler.nSteps;
+                sampleMangler.phaseRamp.setPhase(pos);
+            }
         }
     }
     if (sampleMangler.canPlay){ sampleMangler.play(buffer); }
@@ -160,21 +182,24 @@ bool Sjf_manglerAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Sjf_manglerAudioProcessor::createEditor()
 {
-    return new Sjf_manglerAudioProcessorEditor (*this);
+    return new Sjf_manglerAudioProcessorEditor (*this, parameters);
 }
 
 //==============================================================================
 void Sjf_manglerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    auto state = parameters.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
 }
 
 void Sjf_manglerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    
+    if (xmlState.get() != nullptr)
+        if (xmlState->hasTagName (parameters.state.getType()))
+            parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
 
 //==============================================================================
