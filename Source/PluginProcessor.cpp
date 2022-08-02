@@ -137,6 +137,17 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+
+    
+
+    playHead = this->getPlayHead();
+    if (playHead != nullptr){
+        positionInfo = *playHead->getPosition();
+        if(positionInfo.getBpm()){
+            float bpm = *positionInfo.getBpm();
+            if (sampleMangler.canPlay){ sampleMangler.syncToHost(bpm); }
+        }
+    }
     if (sampleMangler.canPlay){ sampleMangler.play(buffer); }
     
 }

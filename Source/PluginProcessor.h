@@ -111,6 +111,12 @@ public:
         return p;
     };
 
+    void setPhase(float p)
+    {
+        if (p < 0) {p = 0;}
+        else if (p > 1){ p = 1 ;}
+        position = p;
+    };
 private:
     void calculateIncrement(){ increment = 1 / (SR / frequency); };
     
@@ -148,7 +154,9 @@ public:
     float getDuration() { return duration; };
     std::vector<float> revPat, speedPat, subDivPat, subDivAmpRampPat, ampPat, stepPat;
     float revProb, speedProb, subDivProb, ampProb, stepShuffleProb;
-    bool revFlag, speedFlag, subDivFlag, ampFlag, stepShuffleFlag, randomOnLoopFlag;
+    bool revFlag, speedFlag, subDivFlag, ampFlag, stepShuffleFlag, randomOnLoopFlag, syncToHostFlag;
+
+    float hostSyncCompenstation = 1.0f;
     
 private:
     juce::AudioBuffer<float> AudioSample;
@@ -161,6 +169,7 @@ private:
     int lastStep = -1;
     float subDivCount = 0.0f;
     float preSubDivAmp = 0;
+    float hostBPM = 120;
     
     
     
@@ -187,26 +196,13 @@ public:
                                       
                                       if (reader.get() != nullptr)
                                       {
-//                                          juce::AudioBuffer<float> tempBuffer;
-//                                          tempBuffer.clear();
-//                                          tempBuffer.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
-//                                          duration = tempBuffer.getNumSamples();
-//                                          reader->read (&tempBuffer, 0, (int) reader->lengthInSamples, 0, true, true);
-//                                          read_pos = 0;
-//                                          sliceLenSamps = duration/nSlices;
-//                                          AudioSample.makeCopyOf( tempBuffer );
-//                                          tempBuffer.setSize(0, 0);
-//                                          setPatterns();
 
-//                                          juce::AudioBuffer<float> tempBuffer;
                                           AudioSample.clear();
                                           AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
                                           duration = AudioSample.getNumSamples();
                                           reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
                                           read_pos = 0;
                                           sliceLenSamps = duration/nSlices;
-//                                          AudioSample.makeCopyOf( tempBuffer );
-//                                          tempBuffer.setSize(0, 0);
                                           setPatterns();                                      }
                                       
                                   });
@@ -216,7 +212,9 @@ public:
     void play(juce::AudioBuffer<float> &buffer)
     {
         auto envLen = SR / 1000; // samples in one millisecond
-        phaseRamp.setFrequency( 1 / ( nSteps * sliceLenSamps/SR ) );
+        auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
+        rampFrequency *= hostSyncCompenstation;
+        phaseRamp.setFrequency( rampFrequency );
         
         auto bufferSize = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
@@ -394,6 +392,41 @@ public:
         if (read_pos < 0) { read_pos += duration; }
     };
 //==============================================================================
+    void syncToHost(float bpm){
+        hostBPM = bpm;
+        
+//        if (!syncToHostFlag) { hostSyncCompenstation = 1 ; return; }
+        auto sampleBeatLenSec = sliceLenSamps/SR;
+        auto sampleBPM = 60000.0f / sampleBeatLenSec;
+        if ( sampleBPM == hostBPM ){
+            hostSyncCompenstation = 1;
+            return;
+        }
+        else if ( sampleBPM < hostBPM )
+        {
+            while (sampleBPM < hostBPM){
+                sampleBPM *= 2;
+            }
+            float lastDiff = abs(hostBPM - sampleBPM);
+            auto halfSampleBPM = sampleBPM * 0.5;
+            
+            auto newDiff = abs(halfSampleBPM - hostBPM);
+            if ( newDiff < lastDiff) { sampleBPM = halfSampleBPM;}
+        }
+        else
+        {
+            while (sampleBPM > hostBPM){
+                sampleBPM *= 0.5;
+            }
+            float lastDiff = abs(sampleBPM - hostBPM);
+            auto twiceSampleBPM = sampleBPM * 2;
+            auto newDiff = abs(hostBPM - twiceSampleBPM);
+            if (newDiff < lastDiff ) { sampleBPM = twiceSampleBPM;}
+        }
+        hostSyncCompenstation = hostBPM / sampleBPM;
+    };
+//==============================================================================
+    
 private:
     float rand01()
     {
@@ -455,10 +488,13 @@ private:
         auto exponent = (1 - prob) * 20;
         for (int index = 0; index < nSteps; index++)
         {
-            if (prob = 0) {pattern[index] = 0;}
+            if (prob == 0) {pattern[index] = 0;}
             else {pattern[index] = pow( rand01(), exponent );}
         }
     };
+
+//    END OF sjf_sampler CLASS
+//==============================================================================
 };
 
 //==============================================================================
@@ -520,6 +556,9 @@ public:
 public:
         sjf_sampler sampleMangler;
     
+private:
+    juce::AudioPlayHead* playHead;
+    juce::AudioPlayHead::PositionInfo positionInfo;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessor)
