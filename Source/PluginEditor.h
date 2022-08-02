@@ -33,7 +33,7 @@ private:
 
     
     juce::TextButton openButton, playButton, stopButton, randomAllButton;
-    juce::ToggleButton randomOnLoopButton;
+    juce::ToggleButton randomOnLoopButton, hostSyncButton;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
     

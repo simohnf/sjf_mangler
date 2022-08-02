@@ -395,7 +395,8 @@ public:
     void syncToHost(float bpm){
         hostBPM = bpm;
         
-//        if (!syncToHostFlag) { hostSyncCompenstation = 1 ; return; }
+        if (!syncToHostFlag) { hostSyncCompenstation = 1 ; return; }
+        
         auto sampleBeatLenSec = sliceLenSamps/SR;
         auto sampleBPM = 60000.0f / sampleBeatLenSec;
         if ( sampleBPM == hostBPM ){

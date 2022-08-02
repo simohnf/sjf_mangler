@@ -36,6 +36,10 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     randomOnLoopButton.setButtonText ("Randomise All On Loop");
     randomOnLoopButton.onClick = [this] { audioProcessor.sampleMangler.randomOnLoopFlag = randomOnLoopButton.getToggleState(); };
     
+    addAndMakeVisible (hostSyncButton);
+    hostSyncButton.setButtonText ("Sync To Host");
+    hostSyncButton.onClick = [this] { audioProcessor.sampleMangler.syncToHostFlag = hostSyncButton.getToggleState(); };
+    
     addAndMakeVisible (revProbSlider);
     revProbSlider.setRange (0.0f, 1.0f);
     revProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.revProb = revProbSlider.getValue(); audioProcessor.sampleMangler.revFlag = true; };
@@ -116,4 +120,5 @@ void Sjf_manglerAudioProcessorEditor::resized()
     stopButton.setBounds(100, 180, 100, 20);
     randomAllButton.setBounds(100, 200, 100, 20);
     randomOnLoopButton.setBounds(200, 200, 100, 20);
+    hostSyncButton.setBounds(200, 240, 100, 20);
 }
