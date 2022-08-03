@@ -13,6 +13,7 @@
 #include <time.h>
 #include <math.h>
 
+#define PI 3.14159265
 //==============================================================================
 /**
 */
@@ -29,9 +30,8 @@ float phaseEnv( float phase, float period, float envLen){
     if (rampDown > 1) {rampDown = 1;}
     else if (rampDown < 0) {rampDown = 0;}
     rampDown *= -1;
-    
-    return rampUp + rampDown;
-    
+//    return rampUp+rampDown; // this would give linear fade
+    return sin( PI* (rampUp+rampDown)/2 ); // this gives a smooth sinewave based fade
 }
 //==============================================================================
 //==============================================================================
@@ -211,11 +211,14 @@ public:
     float hostSyncCompenstation = 1.0f;
     float sampleDivNoteValue = 1;
     
+    juce::File samplePath;
+    
 private:
     juce::AudioBuffer<float> AudioSample;
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::FileChooser> chooser;
     
+    float fadeInMs = 1;
     float read_pos = 0;
     float duration = 44100;
     float subDivCount = 0.0f;
@@ -236,7 +239,7 @@ public:
     {
 //        bool lastPlayState = canPlay;
         canPlay = false;
-            chooser = std::make_unique<juce::FileChooser> ("Select a Wave file shorter than 2 seconds to play...",
+            chooser = std::make_unique<juce::FileChooser> ("Select a Wave file to play...",
                                                            juce::File{},
                                                            "*.wav");
             auto chooserFlags = juce::FileBrowserComponent::openMode
@@ -249,6 +252,8 @@ public:
                                       std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (file));
                                       if (reader.get() != nullptr)
                                       {
+                                          bool lastPlayState = canPlay;
+                                          canPlay = false;
                                           AudioSample.clear();
                                           AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
                                           duration = AudioSample.getNumSamples();
@@ -256,10 +261,39 @@ public:
                                           read_pos = 0;
                                           sliceLenSamps = duration/nSlices;
                                           setPatterns();
-                                          
+                                          samplePath = file;
+                                          canPlay = lastPlayState;
                                       }
                                   });
 //        canPlay = lastPlayState;
+    };
+//==============================================================================
+    void loadSample(juce::Value path)
+    {
+        juce::File file( path.getValue().toString() );
+        if (file == juce::File{}) { return; }
+        std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (file));
+        if (reader.get() != nullptr)
+        {
+            AudioSample.clear();
+            AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
+            duration = AudioSample.getNumSamples();
+            reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
+            read_pos = 0;
+            sliceLenSamps = duration/nSlices;
+            setPatterns();
+            samplePath = file;
+        }
+    };
+//==============================================================================
+    void setFadeLenMs(float fade)
+    {
+        fadeInMs = fade;
+    };
+//==============================================================================
+    float getFadeInMs()
+    {
+        return fadeInMs;
     };
 //==============================================================================
     void setNumSlices(int slices){
@@ -268,7 +302,7 @@ public:
         setPatterns();
     };
 //==============================================================================
-    int getNumSlices(){
+    int getNumSlices(){ 
         return nSlices;
     };
 //==============================================================================
@@ -298,7 +332,7 @@ public:
 //==============================================================================
     void setPhaseRateMultiplierIndex(int i)
     {
-        phaseRateMultiplier = pow(2, i-2);
+        phaseRateMultiplier = pow(2, i-3);
         hostSyncCompenstation *= phaseRateMultiplier;
 //        sliceLenSamps *= phaseRateMultiplier;
 //        nSlices /= phaseRateMultiplier;
@@ -306,12 +340,12 @@ public:
 //==============================================================================
     int getPhaseRateMultiplierIndex()
     {
-        return 2+ log10(phaseRateMultiplier)/log10(2);
+        return 3 + log10(phaseRateMultiplier)/log10(2);
     };
 //==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
     {
-        auto envLen = SR / 1000; // samples in one millisecond
+        auto envLen = fadeInMs * SR / 1000; // samples in one millisecond
         auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
         rampFrequency *= hostSyncCompenstation;
         phaseRamp.setFrequency( rampFrequency );
@@ -483,8 +517,8 @@ private:
         float speedVal = 1;
         if (!speedRampFlag) { speedVal = speedPat[currentStep] ; }
         else { speedVal = cubicInterpolate(speedPat, stepPhase); }
-        speedVal *= 5;
-        if ( speedVal < 0.5 ) { speedVal = 1; }
+        speedVal = pow(2, (speedVal*12)/12);
+//        if ( abs(speedVal) < 0.5 ) { speedVal = 1; }
         return speedVal;
     };
 //==============================================================================
@@ -523,6 +557,12 @@ private:
     void setRandSpeedPat()
     {
         setRandPat(speedPat, speedProb/100.0f);
+        
+        for (int index = 0; index < nSteps; index++)
+        {
+            if (rand01() >=0.5) { speedPat[index]  *= -1.0f; }
+        }
+            
     };
 //==============================================================================
     void setRandSubDivPat()
@@ -588,7 +628,7 @@ public:
     
     void openButtonClicked ()
     {
-        sampleMangler.canPlay = false;
+//        sampleMangler.canPlay = false;
         sampleMangler.loadSample() ;
     };
     void playButtonClicked (bool play) { sampleMangler.canPlay = play; };
@@ -644,11 +684,13 @@ private:
     
     std::atomic<float>* nSlicesParameter = nullptr;
     std::atomic<float>* nStepsParameter = nullptr;
-    
+    std::atomic<float>* fadeParameter = nullptr;
 
     std::atomic<float>* randOnLoopParameter = nullptr;
     std::atomic<float>* syncToHostParameter = nullptr;
-//    std::atomic<bool>* playParameter = nullptr;
+    std::atomic<float>* phaseRateMultiplierParameter = nullptr;
+    
+    juce::Value filePathParameter;
 //    std::atomic<int>*
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessor)

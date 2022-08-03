@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -31,7 +32,9 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
                  std::make_unique<juce::AudioParameterInt> ("numSteps", "NumSteps", 4, 256, 16),
                  std::make_unique<juce::AudioParameterInt> ("numSlices", "NumSlices", 4, 256, 16),
                  std::make_unique<juce::AudioParameterBool> ("randomOnLoop", "RandomOnLoop", false),
-                 std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", false)
+                 std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", false),
+                 std::make_unique<juce::AudioParameterInt> ("phaseRateMultiplier", "PhaseRateMultiplier", 1, 5, 3),
+                 std::make_unique<juce::AudioParameterFloat> ("fade", "Fade", 0.01, 100, 1)
              })
 {
     revParameter = parameters.getRawParameterValue("revProb");
@@ -42,9 +45,14 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
     
     nSlicesParameter = parameters.getRawParameterValue("numSlices");
     nStepsParameter = parameters.getRawParameterValue("numSteps");
+    fadeParameter = parameters.getRawParameterValue("fade");
     
     randOnLoopParameter = parameters.getRawParameterValue("randomOnLoop");
     syncToHostParameter = parameters.getRawParameterValue("syncToHost");
+    
+    phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
+    
+    filePathParameter = parameters.state.getPropertyAsValue("sampleFilePath", nullptr, true);
     
     sampleMangler.initialise( getSampleRate() );
 }
@@ -203,6 +211,7 @@ juce::AudioProcessorEditor* Sjf_manglerAudioProcessor::createEditor()
 //==============================================================================
 void Sjf_manglerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
+    filePathParameter.setValue(sampleMangler.samplePath.getFullPathName());
     auto state = parameters.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
@@ -213,8 +222,14 @@ void Sjf_manglerAudioProcessor::setStateInformation (const void* data, int sizeI
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     
     if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName (parameters.state.getType()))
+        if (xmlState->hasTagName (parameters.state.getType())){
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
+            filePathParameter.referTo(parameters.state.getPropertyAsValue("sampleFilePath", nullptr) );
+            if (filePathParameter == juce::Value{}){ return; }
+            sampleMangler.loadSample( filePathParameter );
+            
+        }
+    
 }
 
 
@@ -232,7 +247,6 @@ void Sjf_manglerAudioProcessor::checkParameters()
         sampleMangler.subDivProb = *divParameter;
         sampleMangler.subDivFlag = true;
     }
-    
     if (sampleMangler.ampProb != *ampParameter){
         sampleMangler.ampProb = *ampParameter;
         sampleMangler.ampFlag = true;
@@ -241,18 +255,23 @@ void Sjf_manglerAudioProcessor::checkParameters()
         sampleMangler.stepShuffleProb = *shuffleParameter;
         sampleMangler.stepShuffleFlag = true;
     }
-    
     if (sampleMangler.getNumSlices() != *nSlicesParameter){
-        sampleMangler.setNumSlices(*nSlicesParameter);
+        sampleMangler.setNumSlices( *nSlicesParameter );
     }
     if (sampleMangler.getNumSteps() != *nStepsParameter){
-        sampleMangler.setNumSteps(*nStepsParameter);
+        sampleMangler.setNumSteps( *nStepsParameter );
+    }
+    if (sampleMangler.getFadeInMs() != *fadeParameter){
+        sampleMangler.setFadeLenMs( *fadeParameter );
     }
     if (sampleMangler.randomOnLoopFlag != *randOnLoopParameter){
         sampleMangler.randomOnLoopFlag = *randOnLoopParameter;
     }
     if (sampleMangler.syncToHostFlag != *syncToHostParameter){
         sampleMangler.syncToHostFlag = *syncToHostParameter;
+    }
+    if (sampleMangler.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
+        sampleMangler.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
     }
 }
 
