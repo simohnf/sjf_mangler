@@ -234,6 +234,8 @@ public:
 //==============================================================================
     void loadSample()
     {
+//        bool lastPlayState = canPlay;
+        canPlay = false;
             chooser = std::make_unique<juce::FileChooser> ("Select a Wave file shorter than 2 seconds to play...",
                                                            juce::File{},
                                                            "*.wav");
@@ -254,8 +256,10 @@ public:
                                           read_pos = 0;
                                           sliceLenSamps = duration/nSlices;
                                           setPatterns();
+                                          
                                       }
                                   });
+//        canPlay = lastPlayState;
     };
 //==============================================================================
     void setNumSlices(int slices){
@@ -617,6 +621,7 @@ public:
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
 
+    void checkParameters();
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
@@ -637,13 +642,14 @@ private:
     std::atomic<float>* ampParameter = nullptr;
     std::atomic<float>* shuffleParameter = nullptr;
     
-    std::atomic<int>* nSlicesParameter = nullptr;
-    std::atomic<int>* nStepsParameter = nullptr;
+    std::atomic<float>* nSlicesParameter = nullptr;
+    std::atomic<float>* nStepsParameter = nullptr;
     
+
+    std::atomic<float>* randOnLoopParameter = nullptr;
+    std::atomic<float>* syncToHostParameter = nullptr;
 //    std::atomic<bool>* playParameter = nullptr;
 //    std::atomic<int>*
-    std::atomic<bool>* randOnLoopParameter = nullptr;
-    std::atomic<bool>* syncToHostParameter = nullptr;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessor)
 };

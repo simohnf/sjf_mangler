@@ -40,7 +40,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (revProbSlider);
     revProbAttachment.reset(new SliderAttachment (valueTreeState, "revProb", revProbSlider));
-    revProbSlider.setRange (0.0f, 100.0f);
+//    revProbSlider.setRange (0.0f, 100.0f);
     revProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.revProb = revProbSlider.getValue(); audioProcessor.sampleMangler.revFlag = true; };
     
     addAndMakeVisible (revProbLabel);
@@ -49,7 +49,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (speedProbSlider);
     speedProbAttachment.reset(new SliderAttachment (valueTreeState, "speedProb", speedProbSlider));
-    speedProbSlider.setRange (0.0f, 100.0f);
+//    speedProbSlider.setRange (0.0f, 100.0f);
     speedProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.speedProb = speedProbSlider.getValue(); audioProcessor.sampleMangler.speedFlag = true; };
     
     addAndMakeVisible (speedProbLabel);
@@ -67,7 +67,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (ampProbSlider);
     ampProbAttachment.reset(new SliderAttachment (valueTreeState, "ampProb", ampProbSlider));
-    ampProbSlider.setRange (0.0f, 100.0f);
+//    ampProbSlider.setRange (0.0f, 100.0f);
     ampProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.ampProb = ampProbSlider.getValue(); audioProcessor.sampleMangler.ampFlag = true; };
     
     addAndMakeVisible (ampProbLabel);
@@ -76,7 +76,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (stepShuffleProbSlider);
     shuffleProbAttachment.reset(new SliderAttachment (valueTreeState, "shuffleProb", stepShuffleProbSlider));
-    stepShuffleProbSlider.setRange (0.0f, 100.0f);
+//    stepShuffleProbSlider.setRange (0.0f, 100.0f);
     stepShuffleProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.stepShuffleProb = stepShuffleProbSlider.getValue(); audioProcessor.sampleMangler.stepShuffleFlag = true; };
     
     addAndMakeVisible (stepShuffleProbLabel);
@@ -85,9 +85,9 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     
     addAndMakeVisible (nSlicesSlider);
-//    nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesSlider));
-    nSlicesSlider.setRange (4, 256);
     nSlicesSlider.setValue(audioProcessor.sampleMangler.getNumSlices());
+    nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesSlider));
+//    nSlicesSlider.setRange (4, 256);
     nSlicesSlider.onValueChange = [this] { audioProcessor.sampleMangler.setNumSlices( nSlicesSlider.getValue() ) ; };
     
     addAndMakeVisible (nSlicesLabel);
@@ -96,9 +96,9 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     
     addAndMakeVisible (nStepsSlider);
-//    nStepsAttachment.reset(new SliderAttachment (valueTreeState, "numSteps", nStepsSlider));
-    nStepsSlider.setRange (4, 256);
     nStepsSlider.setValue(audioProcessor.sampleMangler.getNumSteps());
+    nStepsAttachment.reset(new SliderAttachment (valueTreeState, "numSteps", nStepsSlider));
+//    nStepsSlider.setRange (4, 256);
     nStepsSlider.onValueChange = [this] { audioProcessor.sampleMangler.setNumSteps( nStepsSlider.getValue() ) ; };
     
     addAndMakeVisible (nStepsLabel);

@@ -37,13 +37,15 @@ private:
     juce::TextButton openButton, randomAllButton; 
     juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
-    std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment;
-    std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
-    
     juce::Slider nSlicesSlider, nStepsSlider;
     juce::Label nSlicesLabel, nStepsLabel;
     juce::ComboBox speedChangeBox;
+    
+
+    std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment;
+    std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };

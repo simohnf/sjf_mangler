@@ -34,6 +34,18 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
                  std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", false)
              })
 {
+    revParameter = parameters.getRawParameterValue("revProb");
+    speedParameter = parameters.getRawParameterValue("speedProb");
+    divParameter = parameters.getRawParameterValue("divProb");
+    ampParameter = parameters.getRawParameterValue("ampProb");;
+    shuffleParameter = parameters.getRawParameterValue("shuffleProb");
+    
+    nSlicesParameter = parameters.getRawParameterValue("numSlices");
+    nStepsParameter = parameters.getRawParameterValue("numSteps");
+    
+    randOnLoopParameter = parameters.getRawParameterValue("randomOnLoop");
+    syncToHostParameter = parameters.getRawParameterValue("syncToHost");
+    
     sampleMangler.initialise( getSampleRate() );
 }
 
@@ -143,6 +155,9 @@ bool Sjf_manglerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 
 void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    
+    checkParameters();
+    
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -202,11 +217,52 @@ void Sjf_manglerAudioProcessor::setStateInformation (const void* data, int sizeI
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
 
+
+void Sjf_manglerAudioProcessor::checkParameters()
+{
+    if (sampleMangler.revProb != *revParameter){
+        sampleMangler.revProb = *revParameter;
+        sampleMangler.revFlag = true;
+    }
+    if (sampleMangler.speedProb != *speedParameter){
+        sampleMangler.speedProb = *speedParameter;
+        sampleMangler.speedFlag = true;
+    }
+    if (sampleMangler.subDivProb != *divParameter){
+        sampleMangler.subDivProb = *divParameter;
+        sampleMangler.subDivFlag = true;
+    }
+    
+    if (sampleMangler.ampProb != *ampParameter){
+        sampleMangler.ampProb = *ampParameter;
+        sampleMangler.ampFlag = true;
+    }
+    if (sampleMangler.stepShuffleProb != *shuffleParameter){
+        sampleMangler.stepShuffleProb = *shuffleParameter;
+        sampleMangler.stepShuffleFlag = true;
+    }
+    
+    if (sampleMangler.getNumSlices() != *nSlicesParameter){
+        sampleMangler.setNumSlices(*nSlicesParameter);
+    }
+    if (sampleMangler.getNumSteps() != *nStepsParameter){
+        sampleMangler.setNumSteps(*nStepsParameter);
+    }
+    if (sampleMangler.randomOnLoopFlag != *randOnLoopParameter){
+        sampleMangler.randomOnLoopFlag = *randOnLoopParameter;
+    }
+    if (sampleMangler.syncToHostFlag != *syncToHostParameter){
+        sampleMangler.syncToHostFlag = *syncToHostParameter;
+    }
+}
+
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Sjf_manglerAudioProcessor();
 }
+
+
 
 
