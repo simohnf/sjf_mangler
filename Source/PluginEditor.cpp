@@ -31,17 +31,13 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (randomOnLoopButton);
     randomOnLoopAttachment.reset(new ButtonAttachment(valueTreeState, "randomOnLoop", randomOnLoopButton));
     randomOnLoopButton.setButtonText ("Randomise All On Loop");
-    randomOnLoopButton.onClick = [this] { audioProcessor.sampleMangler.randomOnLoopFlag = randomOnLoopButton.getToggleState(); };
     
     addAndMakeVisible (hostSyncButton);
     hostSyncAttachment.reset(new ButtonAttachment(valueTreeState, "syncToHost", hostSyncButton));
     hostSyncButton.setButtonText ("Sync To Host");
-    hostSyncButton.onClick = [this] { audioProcessor.sampleMangler.syncToHostFlag = hostSyncButton.getToggleState(); };
     
     addAndMakeVisible (revProbSlider);
     revProbAttachment.reset(new SliderAttachment (valueTreeState, "revProb", revProbSlider));
-//    revProbSlider.setRange (0.0f, 100.0f);
-    revProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.revProb = revProbSlider.getValue(); audioProcessor.sampleMangler.revFlag = true; };
     
     addAndMakeVisible (revProbLabel);
     revProbLabel.setText ("RevProb", juce::dontSendNotification);
@@ -49,8 +45,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (speedProbSlider);
     speedProbAttachment.reset(new SliderAttachment (valueTreeState, "speedProb", speedProbSlider));
-//    speedProbSlider.setRange (0.0f, 100.0f);
-    speedProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.speedProb = speedProbSlider.getValue(); audioProcessor.sampleMangler.speedFlag = true; };
     
     addAndMakeVisible (speedProbLabel);
     speedProbLabel.setText ("SpeedProb", juce::dontSendNotification);
@@ -59,7 +53,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (subDivProbSlider);
     subDivProbAttachment.reset(new SliderAttachment (valueTreeState, "divProb", subDivProbSlider));
     subDivProbSlider.setRange (0.0f, 100.0f);
-    subDivProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.subDivProb = subDivProbSlider.getValue(); audioProcessor.sampleMangler.subDivFlag = true; };
     
     addAndMakeVisible (subDivProbLabel);
     subDivProbLabel.setText ("subDivProb", juce::dontSendNotification);
@@ -67,8 +60,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (ampProbSlider);
     ampProbAttachment.reset(new SliderAttachment (valueTreeState, "ampProb", ampProbSlider));
-//    ampProbSlider.setRange (0.0f, 100.0f);
-    ampProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.ampProb = ampProbSlider.getValue(); audioProcessor.sampleMangler.ampFlag = true; };
     
     addAndMakeVisible (ampProbLabel);
     ampProbLabel.setText ("ampProb", juce::dontSendNotification);
@@ -76,8 +67,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (stepShuffleProbSlider);
     shuffleProbAttachment.reset(new SliderAttachment (valueTreeState, "shuffleProb", stepShuffleProbSlider));
-//    stepShuffleProbSlider.setRange (0.0f, 100.0f);
-    stepShuffleProbSlider.onValueChange = [this] { audioProcessor.sampleMangler.stepShuffleProb = stepShuffleProbSlider.getValue(); audioProcessor.sampleMangler.stepShuffleFlag = true; };
     
     addAndMakeVisible (stepShuffleProbLabel);
     stepShuffleProbLabel.setText ("shuffleProb", juce::dontSendNotification);
@@ -87,8 +76,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (nSlicesSlider);
     nSlicesSlider.setValue(audioProcessor.sampleMangler.getNumSlices());
     nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesSlider));
-//    nSlicesSlider.setRange (4, 256);
-    nSlicesSlider.onValueChange = [this] { audioProcessor.sampleMangler.setNumSlices( nSlicesSlider.getValue() ) ; };
     
     addAndMakeVisible (nSlicesLabel);
     nSlicesLabel.setText ("slices", juce::dontSendNotification);
@@ -98,8 +85,6 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (nStepsSlider);
     nStepsSlider.setValue(audioProcessor.sampleMangler.getNumSteps());
     nStepsAttachment.reset(new SliderAttachment (valueTreeState, "numSteps", nStepsSlider));
-//    nStepsSlider.setRange (4, 256);
-    nStepsSlider.onValueChange = [this] { audioProcessor.sampleMangler.setNumSteps( nStepsSlider.getValue() ) ; };
     
     addAndMakeVisible (nStepsLabel);
     nStepsLabel.setText ("steps", juce::dontSendNotification);
