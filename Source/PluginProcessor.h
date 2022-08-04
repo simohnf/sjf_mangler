@@ -307,6 +307,7 @@ public:
     };
 //==============================================================================
     void setNumSteps(int steps){
+//        DBG("Steps --> "<< steps);
         revPat.resize(steps);
         speedPat.resize(steps);
         subDivPat.resize(steps);
@@ -626,12 +627,8 @@ public:
     ~Sjf_manglerAudioProcessor() override;
 
     
-    void openButtonClicked ()
-    {
-//        sampleMangler.canPlay = false;
-        sampleMangler.loadSample() ;
-    };
-    void playButtonClicked (bool play) { sampleMangler.canPlay = play; };
+    void loadButtonClicked () { sampleMangler.loadSample() ; };
+    void playButtonClicked (bool playFlag) { sampleMangler.canPlay = playFlag; };
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;

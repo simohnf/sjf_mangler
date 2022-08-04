@@ -15,10 +15,10 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
 {
     
     
-    addAndMakeVisible (openButton);
-    openButton.setButtonText ("Open...");
-    openButton.onClick = [this] { audioProcessor.openButtonClicked() ; playButton.setToggleState(false, juce::dontSendNotification) ;};
-    openButton.setTooltip("This allows you to select a new audio sample (NOTE: it will stop the playback)");
+    addAndMakeVisible (loadButton);
+    loadButton.setButtonText ("Load");
+    loadButton.onClick = [this] { audioProcessor.loadButtonClicked() ; playButton.setToggleState(false, juce::dontSendNotification) ;};
+    loadButton.setTooltip("This allows you to select and load a new audio sample (NOTE: it will stop the playback)");
     
     addAndMakeVisible (playButton);
     playButton.setButtonText ("Play");
@@ -43,7 +43,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (revProbSlider);
     revProbAttachment.reset(new SliderAttachment (valueTreeState, "revProb", revProbSlider));
     revProbSlider.setTooltip("This sets the likelyhood of a step being played in reverse");
-    
+    revProbSlider.setTextValueSuffix ("%");
     addAndMakeVisible (revProbLabel);
     revProbLabel.setText ("RevProb", juce::dontSendNotification);
     revProbLabel.attachToComponent (&revProbSlider, true);
@@ -51,7 +51,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (speedProbSlider);
     speedProbAttachment.reset(new SliderAttachment (valueTreeState, "speedProb", speedProbSlider));
     speedProbSlider.setTooltip("This sets the likelyhood of a step being played at a different speed and pitch");
-    
+    speedProbSlider.setTextValueSuffix ("%");
     addAndMakeVisible (speedProbLabel);
     speedProbLabel.setText ("SpeedProb", juce::dontSendNotification);
     speedProbLabel.attachToComponent (&speedProbSlider, true);
@@ -59,7 +59,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (subDivProbSlider);
     subDivProbAttachment.reset(new SliderAttachment (valueTreeState, "divProb", subDivProbSlider));
     subDivProbSlider.setTooltip("This sets the likelyhood of a slice being subdivided (e.g. half as long) and for the first of these subdivisions being repeated with an increasing/decreasing amplitude ramp");
-    
+    subDivProbSlider.setTextValueSuffix ("%");
     addAndMakeVisible (subDivProbLabel);
     subDivProbLabel.setText ("subDivProb", juce::dontSendNotification);
     subDivProbLabel.attachToComponent (&subDivProbSlider, true);
@@ -67,7 +67,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (ampProbSlider);
     ampProbAttachment.reset(new SliderAttachment (valueTreeState, "ampProb", ampProbSlider));
     ampProbSlider.setTooltip("This sets the likelyhood of a step having a lower than normal amplitude");
-    
+    ampProbSlider.setTextValueSuffix ("%");
     addAndMakeVisible (ampProbLabel);
     ampProbLabel.setText ("ampProb", juce::dontSendNotification);
     ampProbLabel.attachToComponent (&ampProbSlider, true);
@@ -75,14 +75,13 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     addAndMakeVisible (stepShuffleProbSlider);
     shuffleProbAttachment.reset(new SliderAttachment (valueTreeState, "shuffleProb", stepShuffleProbSlider));
     stepShuffleProbSlider.setTooltip("This sets the likelyhood of a different slice being played at any given step --> e.g. instead of playing the first slice being played on the first step the  2nd/3rd/last/etc. slice might be played instead");
-    
+    stepShuffleProbSlider.setTextValueSuffix ("%");
     addAndMakeVisible (stepShuffleProbLabel);
     stepShuffleProbLabel.setText ("shuffleProb", juce::dontSendNotification);
     stepShuffleProbLabel.attachToComponent (&stepShuffleProbSlider, true);
     
     
     addAndMakeVisible (nSlicesSlider);
-//    nSlicesSlider.setValue(audioProcessor.sampleMangler.getNumSlices());
     nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesSlider));
     nSlicesSlider.setTooltip("This determines the number of divisions the audio sample is cut up into. \n\nMore slices means more divisions, therefore shorter variations. Fewer slices means longer divisions ad therefore longer variations");
     
@@ -91,18 +90,24 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     nSlicesLabel.attachToComponent (&nSlicesSlider, true);
     
     addAndMakeVisible (nStepsSlider);
-//    nStepsSlider.setValue(audioProcessor.sampleMangler.getNumSteps());
     nStepsAttachment.reset(new SliderAttachment (valueTreeState, "numSteps", nStepsSlider));
     nStepsSlider.setTooltip("This determines the number of slices th device will read through before going back to the beginning. \n\n e.g. If you choose 5 steps, the pattern will be 5 slices long.\n If you choose more steps than there are slices the pattern will loop for that many steps. e.g. if you have 8 slices and 10 steps, with no variations set the device will read the 8 slices, then read the first 2 slices again, and then go back to the start. ");
-    
     addAndMakeVisible (nStepsLabel);
     nStepsLabel.setText ("steps", juce::dontSendNotification);
     nStepsLabel.attachToComponent (&nStepsSlider, true);
     
+//    addAndMakeVisible (nStepsLabel2);
+//    nStepsLabel2.setText (std::to_string( (int)nStepsSlider.getValue() ), juce::dontSendNotification);
+//    nStepsLabel2.setInputRestrictions(3, "0123456789");
+////    nStepsLabel2.setEditable(true);
+////    nStepsLabel.attachToComponent (&nStepsSlider, true);
+//    nStepsLabel2.setClicksOutsideDismissVirtualKeyboard(true);
+//    nStepsLabel2.onFocusLost = [this] {nStepsSlider.setValue( nStepsLabel2.getText().getIntValue() ) ; };
+    
     addAndMakeVisible (fadeLenSlider);
     fadeLenAttachment.reset(new SliderAttachment (valueTreeState, "fade", fadeLenSlider));
     fadeLenSlider.setTooltip("This sets the length of the fade at the beginning and end of each playback segment");
-    
+    fadeLenSlider.setTextValueSuffix ("ms");
     addAndMakeVisible (fadeLenLabel);
     fadeLenLabel.setText ("fade", juce::dontSendNotification);
     fadeLenLabel.attachToComponent (&fadeLenSlider, true);
@@ -113,11 +118,11 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     phaseRateMultiplierBox.addItem("*1", 3);
     phaseRateMultiplierBox.addItem("*2", 4);
     phaseRateMultiplierBox.addItem("*4", 5);
-//    phaseRateMultiplierBox.setSelectedId(3);
     phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
     phaseRateMultiplierBox.setTooltip("This alters the playback speed");
     
     
+//    addAndMakeVisible(numBoxTest);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -137,7 +142,6 @@ void Sjf_manglerAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-//    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
     g.drawFittedText("sjf_mangler", (getWidth()/2.0f) - 50, 0, 100, 20, juce::Justification::centred, 1);
 }
 
@@ -159,11 +163,12 @@ void Sjf_manglerAudioProcessorEditor::resized()
     
     
     
-    playButton.setBounds(255, 160, 100, 20);
-    hostSyncButton.setBounds(320, 160, 100, 20);
-    phaseRateMultiplierBox.setBounds(255, 180, 60, 20);
+    playButton.setBounds(255, 160, 50, 20);
+    hostSyncButton.setBounds(315, 160, 100, 20);
+    phaseRateMultiplierBox.setBounds(260, 180, 60, 20);
+    loadButton.setBounds(320, 180, 50, 20);
     
-    openButton.setBounds(getWidth()/2-50, getHeight()-30, 100, 20);
 
-    
+//    nStepsLabel2.setBounds(50, 250, 50, 20);
+//    numBoxTest.setBounds(50, 250, 150, 20);
 }

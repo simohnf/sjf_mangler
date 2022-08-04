@@ -14,6 +14,18 @@
 //==============================================================================
 /**
 */
+class sjf_numBox :public juce::Slider, juce::Label
+{
+public:
+    sjf_numBox(){};
+    ~sjf_numBox(){};
+    
+    
+};
+//==============================================================================
+//==============================================================================
+//==============================================================================
+//==============================================================================
 class Sjf_manglerAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
@@ -35,7 +47,7 @@ private:
     
 
     
-    juce::TextButton openButton, randomAllButton; 
+    juce::TextButton loadButton, randomAllButton; 
     juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
@@ -43,8 +55,11 @@ private:
     juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel;
     juce::ComboBox phaseRateMultiplierBox;
     
+//    juce::TextEditor nStepsLabel2;
     juce::TooltipWindow tooltipWindow;
 
+//    sjf_numBox numBoxTest;
+    
     std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment, fadeLenAttachment;
     std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment;
     std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment;
