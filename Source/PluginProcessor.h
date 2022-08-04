@@ -188,9 +188,10 @@ class sjf_sampler{
 public:
     sjf_sampler()
     {
-        AudioSample.setSize(2, 44100);
+//        AudioSample.setSize(2, 44100);
         AudioSample.clear();
         formatManager.registerBasicFormats();
+        setPatterns();
     };
     
     ~sjf_sampler(){};
@@ -206,7 +207,6 @@ public:
     bool canPlay = false; bool randomOnLoopFlag = false; bool syncToHostFlag = false;
     bool revFlag = false; bool speedFlag = false; bool speedRampFlag = true;
     bool subDivFlag = false; bool ampFlag = false; bool stepShuffleFlag = false;
-    
 
     float hostSyncCompenstation = 1.0f;
     float sampleDivNoteValue = 1;
@@ -214,12 +214,11 @@ public:
     juce::File samplePath;
     
 private:
-    juce::AudioBuffer<float> AudioSample;
+    juce::AudioBuffer<float> AudioSample, tempBuffer;
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::FileChooser> chooser;
     
     float fadeInMs = 1;
-    float read_pos = 0;
     float duration = 44100;
     float subDivCount = 0.0f;
     float preSubDivAmp = 0;
@@ -228,6 +227,7 @@ private:
     int SR = 44100;
     int lastStep = -1;
     float phaseRateMultiplier = 1;
+    bool sampleLoaded = false;
     
 
     
@@ -237,8 +237,6 @@ public:
 //==============================================================================
     void loadSample()
     {
-//        bool lastPlayState = canPlay;
-        canPlay = false;
             chooser = std::make_unique<juce::FileChooser> ("Select a Wave file to play...",
                                                            juce::File{},
                                                            "*.wav");
@@ -254,18 +252,20 @@ public:
                                       {
                                           bool lastPlayState = canPlay;
                                           canPlay = false;
-                                          AudioSample.clear();
-                                          AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
-                                          duration = AudioSample.getNumSamples();
-                                          reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
-                                          read_pos = 0;
+                                          tempBuffer.clear();
+                                          tempBuffer.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
+                                          duration = tempBuffer.getNumSamples();
+                                          reader->read (&tempBuffer, 0, (int) reader->lengthInSamples, 0, true, true);
+//                                          AudioSample.clear();
+                                          AudioSample.makeCopyOf(tempBuffer);
                                           sliceLenSamps = duration/nSlices;
-                                          setPatterns();
+//                                          setPatterns();
                                           samplePath = file;
+                                          tempBuffer.setSize(0, 0);
+                                          sampleLoaded = true;
                                           canPlay = lastPlayState;
                                       }
                                   });
-//        canPlay = lastPlayState;
     };
 //==============================================================================
     void loadSample(juce::Value path)
@@ -279,10 +279,10 @@ public:
             AudioSample.setSize((int) reader->numChannels, (int) reader->lengthInSamples);
             duration = AudioSample.getNumSamples();
             reader->read (&AudioSample, 0, (int) reader->lengthInSamples, 0, true, true);
-            read_pos = 0;
             sliceLenSamps = duration/nSlices;
             setPatterns();
             samplePath = file;
+            sampleLoaded = true;
         }
     };
 //==============================================================================
@@ -307,7 +307,6 @@ public:
     };
 //==============================================================================
     void setNumSteps(int steps){
-//        DBG("Steps --> "<< steps);
         revPat.resize(steps);
         speedPat.resize(steps);
         subDivPat.resize(steps);
@@ -335,8 +334,6 @@ public:
     {
         phaseRateMultiplier = pow(2, i-3);
         hostSyncCompenstation *= phaseRateMultiplier;
-//        sliceLenSamps *= phaseRateMultiplier;
-//        nSlices /= phaseRateMultiplier;
     };
 //==============================================================================
     int getPhaseRateMultiplierIndex()
@@ -346,6 +343,7 @@ public:
 //==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
     {
+        if (!sampleLoaded) { return; }
         auto envLen = fadeInMs * SR / 1000; // samples in one millisecond
         auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
         rampFrequency *= hostSyncCompenstation;
@@ -383,6 +381,7 @@ public:
 
 //==============================================================================
     void syncToHost(float bpm){
+        if (!sampleLoaded ) { return; }
         hostBPM = bpm;
         
         if (!syncToHostFlag) { hostSyncCompenstation = phaseRateMultiplier ; return; }
@@ -686,6 +685,8 @@ private:
     std::atomic<float>* randOnLoopParameter = nullptr;
     std::atomic<float>* syncToHostParameter = nullptr;
     std::atomic<float>* phaseRateMultiplierParameter = nullptr;
+    
+    std::atomic<float>* playStateParameter = nullptr;
     
     juce::Value filePathParameter;
 //    std::atomic<int>*

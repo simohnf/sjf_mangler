@@ -29,10 +29,11 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
                  std::make_unique<juce::AudioParameterFloat> ("divProb", "Div", 0.0f, 100.0f, 0.0f),
                  std::make_unique<juce::AudioParameterFloat> ("ampProb", "Amp", 0.0f, 100.0f, 0.0f),
                  std::make_unique<juce::AudioParameterFloat> ("shuffleProb", "Shuffle", 0.0f, 100.0f, 0.0f),
-                 std::make_unique<juce::AudioParameterInt> ("numSteps", "NumSteps", 4, 256, 16),
-                 std::make_unique<juce::AudioParameterInt> ("numSlices", "NumSlices", 4, 256, 16),
-                 std::make_unique<juce::AudioParameterBool> ("randomOnLoop", "RandomOnLoop", false),
-                 std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", false),
+                 std::make_unique<juce::AudioParameterInt> ("numSteps", "NumSteps", 4, 1024, 16),
+                 std::make_unique<juce::AudioParameterInt> ("numSlices", "NumSlices", 4, 1024, 16),
+                 std::make_unique<juce::AudioParameterBool> ("randomOnLoop", "RandomOnLoop", true),
+                 std::make_unique<juce::AudioParameterBool> ("play", "Play", true),
+                 std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", true),
                  std::make_unique<juce::AudioParameterInt> ("phaseRateMultiplier", "PhaseRateMultiplier", 1, 5, 3),
                  std::make_unique<juce::AudioParameterFloat> ("fade", "Fade", 0.01, 100, 1)
              })
@@ -49,6 +50,7 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
     
     randOnLoopParameter = parameters.getRawParameterValue("randomOnLoop");
     syncToHostParameter = parameters.getRawParameterValue("syncToHost");
+    playStateParameter = parameters.getRawParameterValue("play");
     
     phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
     
@@ -181,7 +183,7 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         if(positionInfo.getBpm()){
             float bpm = *positionInfo.getBpm();
             if (sampleMangler.canPlay){ sampleMangler.syncToHost(bpm); }
-            if (positionInfo.getIsPlaying())
+            if ( positionInfo.getIsPlaying() && sampleMangler.canPlay)
             {
                 auto pos = *positionInfo.getPpqPosition();
                 pos *= sampleMangler.sampleDivNoteValue;
@@ -190,10 +192,11 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
                 posInt %=sampleMangler.nSteps;
                 pos = (posInt + leftOver) / sampleMangler.nSteps;
                 sampleMangler.phaseRamp.setPhase(pos);
+                sampleMangler.play(buffer);
             }
         }
     }
-    if (sampleMangler.canPlay){ sampleMangler.play(buffer); }
+    if (sampleMangler.canPlay && !sampleMangler.syncToHostFlag){ sampleMangler.play(buffer); }
     
 }
 
@@ -272,6 +275,9 @@ void Sjf_manglerAudioProcessor::checkParameters()
     }
     if (sampleMangler.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
         sampleMangler.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
+    }
+    if (sampleMangler.canPlay != *playStateParameter){
+        sampleMangler.canPlay = *playStateParameter;
     }
 }
 
