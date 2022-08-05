@@ -119,6 +119,105 @@ float cubicInterpolate(juce::AudioBuffer<float>& buffer, int channel, float read
 }
 //==============================================================================
 inline
+float fourPointInterpolatePD(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
+{
+    auto bufferSize = buffer.getNumSamples();
+    double y0; // previous step value
+    double y1; // this step value
+    double y2; // next step value
+    double y3; // next next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    if (index == 0)
+    {
+        y0 = buffer.getSample(channel, bufferSize - 1);
+    }
+    else
+    {
+        y0 = buffer.getSample(channel, index - 1);
+    }
+    y1 = buffer.getSample(channel, index % bufferSize);
+    y2 = buffer.getSample(channel, (index + 1) % bufferSize);
+    y3 = buffer.getSample(channel, (index + 2) % bufferSize);
+    
+    auto y2minusy1 = y2-y1;
+    return y1 + mu * (y2minusy1 - 0.1666667f * (1.0f - mu) * ( (y3 - y0 - 3.0f * y2minusy1) * mu + (y3 + 2.0f*y0 - 3.0f*y1) ) );
+}
+//==============================================================================
+inline
+float linearInterpolate(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
+{
+    auto bufferSize = buffer.getNumSamples();
+    double y1; // this step value
+    double y2; // next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    y1 = buffer.getSample(channel, index % bufferSize);
+    y2 = buffer.getSample(channel, (index + 1) % bufferSize);
+    
+    return y2 + mu*(y2-y1) ;
+}
+//==============================================================================
+inline
+float fourPointFourthOrderOptimal(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
+{
+    //    Copied from Olli Niemitalo - Polynomial Interpolators for High-Quality Resampling of Oversampled Audio
+    auto bufferSize = buffer.getNumSamples();
+    double y0; // previous step value
+    double y1; // this step value
+    double y2; // next step value
+    double y3; // next next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    if (index == 0)
+    {
+        y0 = buffer.getSample(channel, bufferSize - 1);
+    }
+    else
+    {
+        y0 = buffer.getSample(channel, index - 1);
+    }
+    y1 = buffer.getSample(channel, index % bufferSize);
+    y2 = buffer.getSample(channel, (index + 1) % bufferSize);
+    y3 = buffer.getSample(channel, (index + 2) % bufferSize);
+    
+    
+    // Optimal 2x (4-point, 4th-order) (z-form)
+    float z = mu - 1/2.0;
+    float even1 = y2+y1, odd1 = y2-y1;
+    float even2 = y3+y0, odd2 = y3-y0;
+    float c0 = even1*0.45645918406487612 + even2*0.04354173901996461;
+    float c1 = odd1*0.47236675362442071 + odd2*0.17686613581136501;
+    float c2 = even1*-0.253674794204558521 + even2*0.25371918651882464;
+    float c3 = odd1*-0.37917091811631082 + odd2*0.11952965967158000;
+    float c4 = even1*0.04252164479749607 + even2*-0.04289144034653719;
+    return (((c4*z+c3)*z+c2)*z+c1)*z+c0;
+    
+}
+//==============================================================================
+
+inline
 float rand01()
 {
     return float( rand() ) / float( RAND_MAX );
