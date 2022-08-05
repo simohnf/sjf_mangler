@@ -169,7 +169,7 @@ float linearInterpolate(juce::AudioBuffer<float>& buffer, int channel, float rea
     y1 = buffer.getSample(channel, index % bufferSize);
     y2 = buffer.getSample(channel, (index + 1) % bufferSize);
     
-    return y2 + mu*(y2-y1) ;
+    return y1 + mu*(y2-y1) ;
 }
 //==============================================================================
 inline
@@ -214,6 +214,84 @@ float fourPointFourthOrderOptimal(juce::AudioBuffer<float>& buffer, int channel,
     float c4 = even1*0.04252164479749607 + even2*-0.04289144034653719;
     return (((c4*z+c3)*z+c2)*z+c1)*z+c0;
     
+}
+//==============================================================================
+inline
+float cubicInterpolateGodot(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
+{
+    //    Copied from Olli Niemitalo - Polynomial Interpolators for High-Quality Resampling of Oversampled Audio
+    auto bufferSize = buffer.getNumSamples();
+    double y0; // previous step value
+    double y1; // this step value
+    double y2; // next step value
+    double y3; // next next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    if (index == 0)
+    {
+        y0 = buffer.getSample(channel, bufferSize - 1);
+    }
+    else
+    {
+        y0 = buffer.getSample(channel, index - 1);
+    }
+    y1 = buffer.getSample(channel, index % bufferSize);
+    y2 = buffer.getSample(channel, (index + 1) % bufferSize);
+    y3 = buffer.getSample(channel, (index + 2) % bufferSize);
+    double a0,a1,a2,a3,mu2;
+    mu2 = mu*mu;
+    
+    a0 = 3 * y1 - 3 * y2 + y3 - y0;
+    a1 = 2 * y0 - 5 * y1 + 4 * y2 - y3;
+    a2 = y2 - y0;
+    a3 = 2 * y1;
+    
+    return (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3) / 2;
+}
+//==============================================================================
+inline
+float cubicInterpolateHermite(juce::AudioBuffer<float>& buffer, int channel, float read_pos)
+{
+    auto bufferSize = buffer.getNumSamples();
+    double y0; // previous step value
+    double y1; // this step value
+    double y2; // next step value
+    double y3; // next next step value
+    double mu; // fractional part between step 1 & 2
+    
+    float findex = read_pos;
+    if(findex < 0){ findex+= bufferSize;}
+    else if(findex > bufferSize){ findex-= bufferSize;}
+    
+    int index = findex;
+    mu = findex - index;
+    
+    if (index == 0)
+    {
+        y0 = buffer.getSample(channel, bufferSize - 1);
+    }
+    else
+    {
+        y0 = buffer.getSample(channel, index - 1);
+    }
+    y1 = buffer.getSample(channel, index % bufferSize);
+    y2 = buffer.getSample(channel, (index + 1) % bufferSize);
+    y3 = buffer.getSample(channel, (index + 2) % bufferSize);
+    double a0,a1,a2,a3,mu2;
+    mu2 = mu*mu;
+    
+    a0 = y1;
+    a1 = 0.5f * (y2 - y0);
+    a2 = y0 - (2.5f * y1) + (2 * y2) - (0.5f * y3);
+    a3 = (0.5f * (y3 - y0)) + (1.5F * (y1 - y2));
+    return (((((a3 * mu) + a2) * mu) + a1) * mu) + a0;
 }
 //==============================================================================
 
@@ -309,6 +387,7 @@ public:
 
     float hostSyncCompenstation = 1.0f;
     float sampleDivNoteValue = 1;
+    int interpolationType = 0;
     
     juce::File samplePath;
     
@@ -327,7 +406,8 @@ private:
     int lastStep = -1;
     float phaseRateMultiplier = 1;
     bool sampleLoaded = false;
-    
+    float read_pos = 0;
+    int stepCount = 0;
 
     
 public:
@@ -357,7 +437,7 @@ public:
                                           reader->read (&tempBuffer, 0, (int) reader->lengthInSamples, 0, true, true);
 //                                          AudioSample.clear();
                                           AudioSample.makeCopyOf(tempBuffer);
-                                          sliceLenSamps = duration/nSlices;
+                                          sliceLenSamps = duration/(float)nSlices;
 //                                          setPatterns();
                                           samplePath = file;
                                           tempBuffer.setSize(0, 0);
@@ -440,10 +520,49 @@ public:
         return 3 + log10(phaseRateMultiplier)/log10(2);
     };
 //==============================================================================
+//    void play(juce::AudioBuffer<float> &buffer)
+//    {
+//        if (!sampleLoaded) { return; }
+//        auto envLen = fadeInMs * SR / 1000; // samples in one millisecond
+//        auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
+//        rampFrequency *= hostSyncCompenstation;
+//        phaseRamp.setFrequency( rampFrequency );
+//
+//        auto bufferSize = buffer.getNumSamples();
+//        auto numChannels = buffer.getNumChannels();
+//
+//        std::vector<float> phaseOut;
+//        for (int index = 0; index < bufferSize; index++)
+//        {
+//            phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
+//        }
+//
+//        for (int index = 0; index < bufferSize; index++)
+//        {
+//            auto currentStep = checkForChangeOfBeat( floor(phaseOut[index]) );
+//            auto subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
+//            auto phaseWrap = calculatePhaseWrap( (phaseOut[index] - currentStep), subDiv );
+//            auto subDivLenSamps = sliceLenSamps / subDiv;
+//            auto subDivAmp = calculateSubDivAmp( currentStep, subDiv, subDivCount );
+//            auto speedVal = calculateSpeedVal( currentStep, phaseOut[index] );
+//            auto readStep = stepPat[currentStep] ;
+//            auto pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
+//            auto amp = calculateAmpValue( currentStep );
+//            for (int channel = 0; channel < numChannels; channel ++)
+//            {
+////                auto val = AudioSample.getSample(channel % AudioSample.getNumChannels(), (int)pos);
+//                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), pos);
+//                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
+//                val *= phaseEnv( (phaseOut[index] - currentStep), sliceLenSamps, 2* envLen); // this extra envelope is just to fade on each step
+//                buffer.setSample(channel, index, val);
+//            }
+//        }
+//    };
+//==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
     {
         if (!sampleLoaded) { return; }
-        auto envLen = fadeInMs * SR / 1000; // samples in one millisecond
+        double envLen = fadeInMs * SR / 1000; // samples in one millisecond
         auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
         rampFrequency *= hostSyncCompenstation;
         phaseRamp.setFrequency( rampFrequency );
@@ -451,33 +570,117 @@ public:
         auto bufferSize = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
         
-        std::vector<float> phaseOut;
+//        std::vector<float> phaseOut;
+//        for (int index = 0; index < bufferSize; index++)
+//        {
+//            phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
+//        }
+        
+        
         for (int index = 0; index < bufferSize; index++)
         {
-            phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
-        }
-
-        for (int index = 0; index < bufferSize; index++)
-        {
-            auto currentStep = checkForChangeOfBeat( floor(phaseOut[index]) );
-            auto subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
-            auto phaseWrap = calculatePhaseWrap( (phaseOut[index] - currentStep), subDiv );
+            float pos = read_pos + index;
+            stepCount = checkForChangeOfBeat( stepCount );
+            auto subDiv = floor(subDivPat[stepCount] * 8.0f) + 1.0f ;
+            double phase = (pos/sliceLenSamps);
             auto subDivLenSamps = sliceLenSamps / subDiv;
-            auto subDivAmp = calculateSubDivAmp( currentStep, subDiv, subDivCount );
-            auto speedVal = calculateSpeedVal( currentStep, phaseOut[index] );
-            auto readStep = stepPat[currentStep] ;
-            auto pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
-            auto amp = calculateAmpValue( currentStep );
+            auto subDivAmp = calculateSubDivAmp( stepCount, subDiv, subDivCount );
+            auto speedVal = calculateSpeedVal( stepCount, phase );
+            int readStep = stepPat[stepCount] ;
+            while (pos >= subDivLenSamps){
+                pos -= subDivLenSamps;
+            }
+            pos *= speedVal;
+            pos = calculateReverse(stepCount, pos, subDivLenSamps);
+            auto rPos = pos;
+//            auto rPos = calculateReverseAndPosition(stepCount, readStep, pos, subDivLenSamps, speedVal);
+            auto amp = calculateAmpValue( stepCount );
+            auto env = envelope( (int)pos, (int)subDivLenSamps, (int)envLen);
             for (int channel = 0; channel < numChannels; channel ++)
             {
-                auto val = cubicInterpolate(AudioSample, channel % AudioSample.getNumChannels(), pos);
-                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
-                val *= phaseEnv( (phaseOut[index] - currentStep), sliceLenSamps, 2* envLen); // this extra envelope is just to fade on each step
+                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), rPos);
+//                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
+//                val *= phaseEnv( (phase), sliceLenSamps, envLen); // this extra envelope is just to fade on each step
+                val *= env;
                 buffer.setSample(channel, index, val);
             }
+            
         }
-    }; 
+//        DBG("subDivLen "<< sliceLenSamps / (floor( subDivPat[stepCount] * 8.0f) + 1.0f) );
+//        DBG("envLen " << envLen);
+        read_pos += bufferSize;
+        if (read_pos >= sliceLenSamps) {read_pos -= sliceLenSamps; stepCount++; stepCount %= nSteps; }
+    };
+//==============================================================================
+    float envelope( float pos, float period, float envLen)
+    {
+//        pos -= 2;
+        // calculate ramp up as first 'envLen' samples / envLen
+        if (pos < 0){ pos = 0; }
+        else if (pos > period ){ pos = period; }
+        auto outVal = 1.0f;
+        auto sampsAtEnd = period - envLen;
+        if (pos < envLen) { outVal = pos/envLen; }
+        else if(pos > sampsAtEnd)
+        {
+            outVal = 1 - (pos - sampsAtEnd)/envLen;
+        }
+        
+//        DBG("pos --> " << pos << " outVal " << outVal);
+        return outVal; // this would give linear fade
+//        return sin( PI* (outVal)/2 ); // this gives a smooth sinewave based fade
+    };
+//==============================================================================
+    float calculateReverse(int stepCount, float pos, float subDivLenSamps)
+    {
+        //            REVERSE LOGIC
+        if ( revPat[stepCount] >= 0.25 )
+        {
+            pos =  subDivLenSamps - pos;
+        }
+        
+        return pos;
+    };
+//==============================================================================
+    float calculateReverseAndPosition(int stepCount, int readStep, float pos, float subDivLenSamps, float speedVal)
+    {
+        pos *= speedVal;
 
+        auto posOut = (readStep * sliceLenSamps) + pos;
+        
+        //            JUST RECHECK POSITION FOR SAFETY
+        while (posOut < 0 ) { posOut += duration; }
+        while (posOut >= duration) { posOut -= duration; }
+        
+        return posOut;
+    };
+//==============================================================================
+    float calculateSampleValue(juce::AudioBuffer<float>& buffer, int channel, float pos)
+    {
+        if (interpolationType < 0) { interpolationType = 0; }
+        else if (interpolationType > 5) { interpolationType = 5; }
+        switch(interpolationType)
+        {
+            case 0:
+                return linearInterpolate(buffer, channel, pos);
+                break;
+            case 1:
+                return cubicInterpolate(buffer, channel, pos);
+                break;
+            case 2:
+                return fourPointInterpolatePD(buffer, channel, pos);
+                break;
+            case 3:
+                return fourPointFourthOrderOptimal(buffer, channel, pos);
+                break;
+            case 4:
+                return cubicInterpolateGodot(buffer, channel, pos);
+                break;
+            case 5:
+                return cubicInterpolateHermite(buffer, channel, pos);
+                break;
+        }
+    };
 //==============================================================================
     void syncToHost(float bpm){
         if (!sampleLoaded ) { return; }
@@ -545,20 +748,20 @@ private:
             {
                 randomiseAll();
             }
-            lastStep = currentStep;
             subDivCount = 0;
             checkPatternRandomisationFlags();
         }
+        lastStep = currentStep;
         return currentStep;
     };
 //==============================================================================
-    float calculatePhaseWrap(float phaseWrap, float subDiv){
+    double calculatePhaseWrap(double phaseWrap, double subDiv){
 
         //            SUBDIVISION & TRAIL LOGIC
         phaseWrap *= subDiv;
         if (phaseWrap >= 1)
         {
-            int phaseInt = phaseWrap;
+            double phaseInt = floor(phaseWrap);
             phaseWrap -= phaseInt;
             subDivCount = phaseInt;
         }
@@ -591,33 +794,32 @@ private:
 
     float calculateAmpValue(int currentStep) { return ampPat[currentStep]; };
 //==============================================================================
-    float calculateReverseAndPosition(int currentStep, int readStep, float phaseWrap, float subDivLenSamps, float speedVal)
-    {
-        float pos;
-        //            REVERSE LOGIC
-        if ( revPat[currentStep] < 0.25 )
-        {
-            pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps;
-        }
-        else
-        {
-            pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps;
-        }
-        
-        //            JUST RECHECK POSITION FOR SAFETY
-        while (pos < 0 ) { pos += duration; }
-        while (pos >= duration) { pos -= duration; }
-        
-        return pos;
-    };
-//==============================================================================
+//    float calculateReverseAndPosition(int currentStep, int readStep, float phaseWrap, float subDivLenSamps, float speedVal)
+//    {
+//        float pos;
+//        //            REVERSE LOGIC
+//        if ( revPat[currentStep] < 0.25 )
+//        {
+//            pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps;
+//        }
+//        else
+//        {
+//            pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps;
+//        }
+//
+//        //            JUST RECHECK POSITION FOR SAFETY
+//        while (pos < 0 ) { pos += duration; }
+//        while (pos >= duration) { pos -= duration; }
+//
+//        return pos;
+//    };
+////==============================================================================
     float calculateSpeedVal( int currentStep, float stepPhase )
     {
-        float speedVal = 1;
+        float speedVal = 0;
         if (!speedRampFlag) { speedVal = speedPat[currentStep] ; }
-        else { speedVal = cubicInterpolate(speedPat, stepPhase); }
+        else { speedVal = 0 + (speedPat[currentStep] * stepPhase) ; }
         speedVal = pow(2, (speedVal*12)/12);
-//        if ( abs(speedVal) < 0.5 ) { speedVal = 1; }
         return speedVal;
     };
 //==============================================================================

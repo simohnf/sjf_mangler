@@ -121,6 +121,15 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
     phaseRateMultiplierBox.setTooltip("This alters the playback speed");
     
+    addAndMakeVisible(interpolationTypeBox);
+    interpolationTypeBox.addItem("linear", 1);
+    interpolationTypeBox.addItem("cubic", 2);
+    interpolationTypeBox.addItem("PD", 3);
+    interpolationTypeBox.addItem("optimal", 4);
+    interpolationTypeBox.addItem("godot", 5);
+    interpolationTypeBox.addItem("Hermite", 6);
+    interpolationTypeBox.onChange = [this]{ DBG("interpType "<< interpolationTypeBox.getSelectedId() - 1;); audioProcessor.sampleMangler.interpolationType = interpolationTypeBox.getSelectedId() - 1; };
+    
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -173,5 +182,7 @@ void Sjf_manglerAudioProcessorEditor::resized()
     hostSyncButton.setBounds(playButton.getBounds().getX() + playButton.getBounds().getWidth(), playButton.getBounds().getY(), sliderHeight*3, sliderHeight*3);
     phaseRateMultiplierBox.setBounds(hostSyncButton.getBounds().getX(), hostSyncButton.getBounds().getY()+hostSyncButton.getBounds().getHeight(), sliderHeight*3, sliderHeight);
     loadButton.setBounds(hostSyncButton.getBounds().getX()+hostSyncButton.getBounds().getWidth(), hostSyncButton.getBounds().getY(), playButton.getBounds().getWidth(), playButton.getBounds().getHeight());
+    
+    interpolationTypeBox.setBounds(0, getHeight()-20, 60, 20);
     
 }

@@ -150,7 +150,7 @@ private:
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
     juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel;
-    juce::ComboBox phaseRateMultiplierBox;
+    juce::ComboBox phaseRateMultiplierBox, interpolationTypeBox;
     
     juce::TooltipWindow tooltipWindow;
 
