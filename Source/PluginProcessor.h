@@ -365,7 +365,6 @@ class sjf_sampler{
 public:
     sjf_sampler()
     {
-//        AudioSample.setSize(2, 44100);
         AudioSample.clear();
         formatManager.registerBasicFormats();
         setPatterns();
@@ -373,10 +372,9 @@ public:
     
     ~sjf_sampler(){};
     
-    void initialise(int sampleRate){ SR  = sampleRate; phaseRamp.setSampleRate( SR ); srand((unsigned)time(NULL)); };
+    void initialise(int sampleRate){ SR  = sampleRate; srand((unsigned)time(NULL)); };
     
     int nSteps = 16; int nSlices = 16;
-    sjf_phasor phaseRamp;
     
     
     std::vector<float> revPat, speedPat, subDivPat, subDivAmpRampPat, ampPat, stepPat;
@@ -384,9 +382,6 @@ public:
     bool canPlay = false; bool randomOnLoopFlag = false; bool syncToHostFlag = false;
     bool revFlag = false; bool speedFlag = false; bool speedRampFlag = true;
     bool subDivFlag = false; bool ampFlag = false; bool stepShuffleFlag = false;
-
-    float hostSyncCompenstation = 1.0f;
-    float sampleDivNoteValue = 1;
     int interpolationType = 0;
     
     juce::File samplePath;
@@ -398,7 +393,6 @@ private:
     
     float fadeInMs = 1;
     float duration = 44100;
-    float subDivCount = 0.0f;
     float preSubDivAmp = 0;
     float hostBPM = 120;
     float sliceLenSamps;
@@ -408,12 +402,13 @@ private:
     bool sampleLoaded = false;
     float read_pos = 0;
     int stepCount = 0;
+    
 
     
 public:
-//==============================================================================
+    //==============================================================================
     float getDuration() { return duration; };
-//==============================================================================
+    //==============================================================================
     void loadSample()
     {
             chooser = std::make_unique<juce::FileChooser> ("Select a Wave file to play...",
@@ -446,7 +441,7 @@ public:
                                       }
                                   });
     };
-//==============================================================================
+    //==============================================================================
     void loadSample(juce::Value path)
     {
         juce::File file( path.getValue().toString() );
@@ -464,27 +459,29 @@ public:
             sampleLoaded = true;
         }
     };
-//==============================================================================
+    //==============================================================================
     void setFadeLenMs(float fade)
     {
         fadeInMs = fade;
     };
-//==============================================================================
+    //==============================================================================
     float getFadeInMs()
     {
         return fadeInMs;
     };
-//==============================================================================
-    void setNumSlices(int slices){
+    //==============================================================================
+    void setNumSlices(int slices)
+    {
         nSlices = slices;
         sliceLenSamps = duration/nSlices;
         setPatterns();
     };
-//==============================================================================
-    int getNumSlices(){ 
+    //==============================================================================
+    int getNumSlices()
+    {
         return nSlices;
     };
-//==============================================================================
+    //==============================================================================
     void setNumSteps(int steps){
         revPat.resize(steps);
         speedPat.resize(steps);
@@ -504,118 +501,139 @@ public:
         }
         nSteps = steps;
     };
-//==============================================================================
-    int getNumSteps(){
+    //==============================================================================
+    int getNumSteps()
+    {
         return nSteps;
     };
-//==============================================================================
+    //==============================================================================
     void setPhaseRateMultiplierIndex(int i)
     {
         phaseRateMultiplier = pow(2, i-3);
-        hostSyncCompenstation *= phaseRateMultiplier;
     };
-//==============================================================================
+    //==============================================================================
     int getPhaseRateMultiplierIndex()
     {
         return 3 + log10(phaseRateMultiplier)/log10(2);
     };
-//==============================================================================
-//    void play(juce::AudioBuffer<float> &buffer)
-//    {
-//        if (!sampleLoaded) { return; }
-//        auto envLen = fadeInMs * SR / 1000; // samples in one millisecond
-//        auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
-//        rampFrequency *= hostSyncCompenstation;
-//        phaseRamp.setFrequency( rampFrequency );
-//
-//        auto bufferSize = buffer.getNumSamples();
-//        auto numChannels = buffer.getNumChannels();
-//
-//        std::vector<float> phaseOut;
-//        for (int index = 0; index < bufferSize; index++)
-//        {
-//            phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
-//        }
-//
-//        for (int index = 0; index < bufferSize; index++)
-//        {
-//            auto currentStep = checkForChangeOfBeat( floor(phaseOut[index]) );
-//            auto subDiv = floor(subDivPat[currentStep] * 8.0f) + 1.0f ;
-//            auto phaseWrap = calculatePhaseWrap( (phaseOut[index] - currentStep), subDiv );
-//            auto subDivLenSamps = sliceLenSamps / subDiv;
-//            auto subDivAmp = calculateSubDivAmp( currentStep, subDiv, subDivCount );
-//            auto speedVal = calculateSpeedVal( currentStep, phaseOut[index] );
-//            auto readStep = stepPat[currentStep] ;
-//            auto pos = calculateReverseAndPosition( currentStep,  readStep,  phaseWrap,  subDivLenSamps,  speedVal);
-//            auto amp = calculateAmpValue( currentStep );
-//            for (int channel = 0; channel < numChannels; channel ++)
-//            {
-////                auto val = AudioSample.getSample(channel % AudioSample.getNumChannels(), (int)pos);
-//                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), pos);
-//                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
-//                val *= phaseEnv( (phaseOut[index] - currentStep), sliceLenSamps, 2* envLen); // this extra envelope is just to fade on each step
-//                buffer.setSample(channel, index, val);
-//            }
-//        }
-//    };
-//==============================================================================
+    //==============================================================================
     void play(juce::AudioBuffer<float> &buffer)
     {
         if (!sampleLoaded) { return; }
-        double envLen = fadeInMs * SR / 1000; // samples in one millisecond
-        auto rampFrequency = 1.0f / ( nSteps * sliceLenSamps/SR );
-        rampFrequency *= hostSyncCompenstation;
-        phaseRamp.setFrequency( rampFrequency );
+        auto envLen = phaseRateMultiplier * fadeInMs * SR / 1000;
+        envLen = round( envLen ) ;
         
         auto bufferSize = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
         
-//        std::vector<float> phaseOut;
-//        for (int index = 0; index < bufferSize; index++)
-//        {
-//            phaseOut.push_back( phaseRamp.output() * nSteps ); // phase Out goes 0 -> nSteps
-//        }
-        
+        auto increment = phaseRateMultiplier;
         
         for (int index = 0; index < bufferSize; index++)
         {
-            float pos = read_pos + index;
-            stepCount = checkForChangeOfBeat( stepCount );
+            if (read_pos >= sliceLenSamps) {stepCount++; stepCount %= nSteps; }
+            while (read_pos >= sliceLenSamps){ read_pos -= sliceLenSamps; }
+            
+            checkForChangeOfBeat( stepCount );
+            auto pos = read_pos;
             auto subDiv = floor(subDivPat[stepCount] * 8.0f) + 1.0f ;
-            double phase = (pos/sliceLenSamps);
-            auto subDivLenSamps = sliceLenSamps / subDiv;
-            auto subDivAmp = calculateSubDivAmp( stepCount, subDiv, subDivCount );
-            auto speedVal = calculateSpeedVal( stepCount, phase );
-            int readStep = stepPat[stepCount] ;
-            while (pos >= subDivLenSamps){
-                pos -= subDivLenSamps;
-            }
-            pos *= speedVal;
-            pos = calculateReverse(stepCount, pos, subDivLenSamps);
-            auto rPos = pos;
-//            auto rPos = calculateReverseAndPosition(stepCount, readStep, pos, subDivLenSamps, speedVal);
+            auto subDivLenSamps = sliceLenSamps / subDiv ;
+            auto subDivAmp = calculateSubDivAmp( stepCount, subDiv, int(pos / subDivLenSamps) );
+            auto speedVal = calculateSpeedVal( stepCount, (read_pos / sliceLenSamps) );
+            while (pos >= subDivLenSamps){ pos -= subDivLenSamps; }
+            auto env = envelope( pos , subDivLenSamps, envLen );
             auto amp = calculateAmpValue( stepCount );
-            auto env = envelope( (int)pos, (int)subDivLenSamps, (int)envLen);
+            pos = calculateReverse(stepCount, pos, subDivLenSamps);
+            pos *= speedVal;
+            pos += stepPat[stepCount] * sliceLenSamps;
+            
             for (int channel = 0; channel < numChannels; channel ++)
             {
-                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), rPos);
-//                val *= subDivAmp * amp * phaseEnv(phaseWrap, subDivLenSamps, envLen);
-//                val *= phaseEnv( (phase), sliceLenSamps, envLen); // this extra envelope is just to fade on each step
+                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), pos);
+                val *= subDivAmp * amp;
                 val *= env;
                 buffer.setSample(channel, index, val);
             }
-            
+            read_pos += increment;
         }
-//        DBG("subDivLen "<< sliceLenSamps / (floor( subDivPat[stepCount] * 8.0f) + 1.0f) );
-//        DBG("envLen " << envLen);
-        read_pos += bufferSize;
-        if (read_pos >= sliceLenSamps) {read_pos -= sliceLenSamps; stepCount++; stepCount %= nSteps; }
     };
-//==============================================================================
+    //==============================================================================
+    void play(juce::AudioBuffer<float> &buffer, float bpm, double hostPosition)
+    {
+        if (!sampleLoaded) { return; }
+        auto hostSyncCompenstation =  calculateHostCompensation( bpm );
+        auto envLen = hostSyncCompenstation * phaseRateMultiplier * fadeInMs * SR / 1000;
+        envLen = round( envLen );
+        
+        auto bufferSize = buffer.getNumSamples();
+        auto numChannels = buffer.getNumChannels();
+        
+        auto hostSampQuarter = 60.0f*SR/bpm;
+        hostPosition *= hostSampQuarter * hostSyncCompenstation * phaseRateMultiplier;
+        auto leftOver = hostPosition / sliceLenSamps;
+        stepCount = (int)leftOver;
+        leftOver = hostPosition - stepCount*sliceLenSamps;
+        
+        read_pos = leftOver;
+        stepCount %= nSteps;
+        auto increment = phaseRateMultiplier * hostSyncCompenstation;
+        
+        for (int index = 0; index < bufferSize; index++)
+        {
+            if (read_pos >= sliceLenSamps) {stepCount++; stepCount %= nSteps; }
+            while (read_pos >= sliceLenSamps){ read_pos -= sliceLenSamps; }
+            
+            checkForChangeOfBeat( stepCount );
+            auto pos = read_pos;
+            auto subDiv = floor(subDivPat[stepCount] * 8.0f) + 1.0f ;
+            auto subDivLenSamps = sliceLenSamps / subDiv ;
+            auto subDivAmp = calculateSubDivAmp( stepCount, subDiv, int(pos / subDivLenSamps) );
+            auto speedVal = calculateSpeedVal( stepCount, (read_pos / sliceLenSamps) );
+            while (pos >= subDivLenSamps){ pos -= subDivLenSamps; }
+            auto env = envelope( pos , subDivLenSamps, envLen ); // Check this out more
+            auto amp = calculateAmpValue( stepCount );
+            pos = calculateReverse(stepCount, pos, subDivLenSamps);
+            pos *= speedVal;
+            pos += stepPat[stepCount] * sliceLenSamps;
+
+            for (int channel = 0; channel < numChannels; channel ++)
+            {
+                auto val = calculateSampleValue(AudioSample, channel % AudioSample.getNumChannels(), pos);
+                val *= subDivAmp * amp;
+                val *= env;
+                buffer.setSample(channel, index, val);
+            }
+            read_pos +=  increment;
+        }
+    };
+    //==============================================================================
+    void randomiseAll()
+    {
+        revFlag = true;
+        speedFlag = true;
+        subDivFlag = true;
+        ampFlag = true;
+        stepShuffleFlag = true;
+    };
+    //==============================================================================
+private:
+    bool checkForChangeOfBeat(int currentStep)
+    {
+        bool newStep = false;
+        if ( currentStep != lastStep )
+        {   // This is just to randomise patterns at the start of each loop
+            if (currentStep == 0 && randomOnLoopFlag)
+            {
+                randomiseAll();
+            }
+            checkPatternRandomisationFlags();
+            newStep = true;
+        }
+        lastStep = currentStep;
+        return newStep;
+    };
+    //==============================================================================
     float envelope( float pos, float period, float envLen)
     {
-//        pos -= 2;
-        // calculate ramp up as first 'envLen' samples / envLen
         if (pos < 0){ pos = 0; }
         else if (pos > period ){ pos = period; }
         auto outVal = 1.0f;
@@ -625,12 +643,19 @@ public:
         {
             outVal = 1 - (pos - sampsAtEnd)/envLen;
         }
-        
-//        DBG("pos --> " << pos << " outVal " << outVal);
-        return outVal; // this would give linear fade
-//        return sin( PI* (outVal)/2 ); // this gives a smooth sinewave based fade
+        //        return outVal; // this would give linear fade
+        return sin( PI* (outVal)/2 ); // this gives a smooth sinewave based fade
     };
-//==============================================================================
+    //==============================================================================
+    float calculatePosition(int stepCount, int readStep, float pos, float subDivLenSamps){
+        auto posOut = (readStep * sliceLenSamps) + pos;
+        
+        //            JUST RECHECK POSITION FOR SAFETY
+        while (posOut < 0 ) { posOut += duration; }
+        while (posOut >= duration) { posOut -= duration; }
+        return posOut;
+    }
+    //==============================================================================
     float calculateReverse(int stepCount, float pos, float subDivLenSamps)
     {
         //            REVERSE LOGIC
@@ -638,23 +663,9 @@ public:
         {
             pos =  subDivLenSamps - pos;
         }
-        
         return pos;
     };
-//==============================================================================
-    float calculateReverseAndPosition(int stepCount, int readStep, float pos, float subDivLenSamps, float speedVal)
-    {
-        pos *= speedVal;
-
-        auto posOut = (readStep * sliceLenSamps) + pos;
-        
-        //            JUST RECHECK POSITION FOR SAFETY
-        while (posOut < 0 ) { posOut += duration; }
-        while (posOut >= duration) { posOut -= duration; }
-        
-        return posOut;
-    };
-//==============================================================================
+    //==============================================================================
     float calculateSampleValue(juce::AudioBuffer<float>& buffer, int channel, float pos)
     {
         if (interpolationType < 0) { interpolationType = 0; }
@@ -681,93 +692,35 @@ public:
                 break;
         }
     };
-//==============================================================================
-    void syncToHost(float bpm){
-        if (!sampleLoaded ) { return; }
+    //==============================================================================
+    float calculateHostCompensation(float bpm){
+        if (!sampleLoaded ) { return 1; }
         hostBPM = bpm;
-        
-        if (!syncToHostFlag) { hostSyncCompenstation = phaseRateMultiplier ; return; }
-        
-        auto sliceLenSec = sliceLenSamps/SR;
-        auto sampleBPM = 60000.0f / sliceLenSec;
-        if ( sampleBPM == hostBPM ){
-            hostSyncCompenstation = 1;
-            sampleDivNoteValue = 1;
-            return;
+        auto hostQuarterNoteSamps = SR*60.0f/bpm;
+        auto multiplier = 1.0f;
+        if (!syncToHostFlag) { return 1; }
+        if (sliceLenSamps == hostQuarterNoteSamps){
+            return 1;
         }
-        else if ( sampleBPM < hostBPM )
-        {
-            while (sampleBPM < hostBPM){ sampleBPM *= 2; }
-            float lastDiff = abs(hostBPM - sampleBPM);
-            auto halfSampleBPM = sampleBPM * 0.5;
-            
-            auto newDiff = abs(halfSampleBPM - hostBPM);
-            if ( newDiff < lastDiff) { sampleBPM = halfSampleBPM;}
+        else if (sliceLenSamps < hostQuarterNoteSamps){
+            while (sliceLenSamps * multiplier < hostQuarterNoteSamps){ multiplier *= 2; }
+            auto lastDiff = abs(hostQuarterNoteSamps - sliceLenSamps*multiplier);
+            auto halfMultiplier = multiplier * 0.5;
+            auto newDiff = abs(hostQuarterNoteSamps - sliceLenSamps*halfMultiplier);
+            if ( newDiff < lastDiff) { multiplier = halfMultiplier; }
         }
         else
         {
-            while (sampleBPM > hostBPM){
-                sampleBPM *= 0.5;
-            }
-            float lastDiff = abs(sampleBPM - hostBPM);
-            auto twiceSampleBPM = sampleBPM * 2;
-            auto newDiff = abs(hostBPM - twiceSampleBPM);
-            if (newDiff < lastDiff ) { sampleBPM = twiceSampleBPM;}
+            while (sliceLenSamps > hostQuarterNoteSamps *multiplier){ multiplier *= 2; }
+            float lastDiff = abs(hostQuarterNoteSamps*multiplier - sliceLenSamps);
+            auto halfMultiplier = multiplier * 0.5f;
+            auto newDiff = abs(hostQuarterNoteSamps*halfMultiplier - sliceLenSamps);
+            if (newDiff < lastDiff ) { multiplier = halfMultiplier;}
+            multiplier = 1/multiplier;
         }
-        sampleBPM /= phaseRateMultiplier;
-        
-        auto sampleQuarterLenSamps = 60.0 * (double)SR/sampleBPM;
-        if (sampleQuarterLenSamps > sliceLenSamps)
-        {
-            sampleDivNoteValue = round( sampleQuarterLenSamps / sliceLenSamps );
-        }
-        else
-        {
-            sampleDivNoteValue = round( sliceLenSamps / sampleQuarterLenSamps );
-            sampleDivNoteValue = 1.0f / (float)sampleDivNoteValue;
-        }
-        
-        hostSyncCompenstation = hostBPM / ( sampleBPM );
+        return (sliceLenSamps*multiplier) / hostQuarterNoteSamps ;
     };
-//==============================================================================
-    void randomiseAll()
-    {
-        revFlag = true;
-        speedFlag = true;
-        subDivFlag = true;
-        ampFlag = true;
-        stepShuffleFlag = true;
-    };
-//==============================================================================
-private:
-    int checkForChangeOfBeat(int currentStep)
-    {
-        if ( currentStep != lastStep )
-        {   // This is just to randomise patterns at the start of each loop
-            if (currentStep == 0 && randomOnLoopFlag)
-            {
-                randomiseAll();
-            }
-            subDivCount = 0;
-            checkPatternRandomisationFlags();
-        }
-        lastStep = currentStep;
-        return currentStep;
-    };
-//==============================================================================
-    double calculatePhaseWrap(double phaseWrap, double subDiv){
-
-        //            SUBDIVISION & TRAIL LOGIC
-        phaseWrap *= subDiv;
-        if (phaseWrap >= 1)
-        {
-            double phaseInt = floor(phaseWrap);
-            phaseWrap -= phaseInt;
-            subDivCount = phaseInt;
-        }
-        return phaseWrap;
-    };
-//==============================================================================
+    //==============================================================================
     float calculateSubDivAmp( int currentStep, float subDiv, float subDivCount )
     {
         auto subDivAmp = 1.0f;
@@ -790,30 +743,9 @@ private:
         }
         return subDivAmp;
     };
-//==============================================================================
-
+    //==============================================================================
     float calculateAmpValue(int currentStep) { return ampPat[currentStep]; };
-//==============================================================================
-//    float calculateReverseAndPosition(int currentStep, int readStep, float phaseWrap, float subDivLenSamps, float speedVal)
-//    {
-//        float pos;
-//        //            REVERSE LOGIC
-//        if ( revPat[currentStep] < 0.25 )
-//        {
-//            pos =  (readStep + (phaseWrap * speedVal)) * subDivLenSamps;
-//        }
-//        else
-//        {
-//            pos = ( (readStep + 1) - (phaseWrap * speedVal) ) * subDivLenSamps;
-//        }
-//
-//        //            JUST RECHECK POSITION FOR SAFETY
-//        while (pos < 0 ) { pos += duration; }
-//        while (pos >= duration) { pos -= duration; }
-//
-//        return pos;
-//    };
-////==============================================================================
+    //==============================================================================
     float calculateSpeedVal( int currentStep, float stepPhase )
     {
         float speedVal = 0;
@@ -822,7 +754,7 @@ private:
         speedVal = pow(2, (speedVal*12)/12);
         return speedVal;
     };
-//==============================================================================
+    //==============================================================================
     void setPatterns()
     {
         revPat.resize(nSteps);
@@ -841,7 +773,7 @@ private:
             stepPat[index] = index % nSlices;
         }
     };
-//==============================================================================
+    //==============================================================================
     void checkPatternRandomisationFlags(){
         if(revFlag){ setRandRevPat(); revFlag = false;}
         if(speedFlag) { setRandSpeedPat(); speedFlag = false;}
@@ -849,12 +781,12 @@ private:
         if(ampFlag) { setRandAmpPat(); ampFlag = false;}
         if(stepShuffleFlag) { setRandStepPat(); stepShuffleFlag = false;}
     };
-//==============================================================================
+    //==============================================================================
     void setRandRevPat()
     {
         setRandPat(revPat, revProb/100.0f);
     };
-//==============================================================================
+    //==============================================================================
     void setRandSpeedPat()
     {
         setRandPat(speedPat, speedProb/100.0f);
@@ -865,7 +797,7 @@ private:
         }
             
     };
-//==============================================================================
+    //==============================================================================
     void setRandSubDivPat()
     {
         setRandPat(subDivPat, subDivProb/100.0f);
@@ -874,12 +806,12 @@ private:
             subDivAmpRampPat[index] = rand01();
         }
     };
-//==============================================================================
+    //==============================================================================
     void setRandAmpPat()
     {
         setRandPat(ampPat, 1 - pow(ampProb/100.0f, 4));
     };
-//==============================================================================
+    //==============================================================================
     void setRandStepPat()
     {
         stepPat.resize(nSteps);
@@ -896,7 +828,7 @@ private:
             }
         }
     };
-//==============================================================================
+    //==============================================================================
     void setRandPat(std::vector<float>& pattern, float prob)
     {
         pattern.resize(nSteps);

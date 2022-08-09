@@ -180,19 +180,12 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     playHead = this->getPlayHead();
     if (playHead != nullptr){
         positionInfo = *playHead->getPosition();
-        if(positionInfo.getBpm()){
+        if( positionInfo.getBpm() ){
             float bpm = *positionInfo.getBpm();
-            if (sampleMangler.canPlay){ sampleMangler.syncToHost(bpm); }
-            if ( positionInfo.getIsPlaying() && sampleMangler.canPlay)
+            if ( positionInfo.getIsPlaying() && sampleMangler.canPlay && sampleMangler.syncToHostFlag)
             {
-                auto pos = *positionInfo.getPpqPosition();
-                pos *= sampleMangler.sampleDivNoteValue;
-                int posInt = (int)pos;
-                auto leftOver = pos - posInt;
-                posInt %=sampleMangler.nSteps;
-                pos = (posInt + leftOver) / sampleMangler.nSteps;
-                sampleMangler.phaseRamp.setPhase(pos);
-                sampleMangler.play(buffer);
+                double pos = *positionInfo.getPpqPosition();
+                sampleMangler.play(buffer, bpm, pos);
             }
         }
     }
