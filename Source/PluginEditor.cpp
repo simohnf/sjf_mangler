@@ -13,7 +13,7 @@
 Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
 {
-    
+//    tooltipWindow(this, 700);
     
     addAndMakeVisible (loadButton);
     loadButton.setButtonText ("Load\nAudio\nSample");
@@ -129,6 +129,8 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     interpolationTypeBox.addItem("godot", 5);
     interpolationTypeBox.addItem("Hermite", 6);
     interpolationTypeBox.onChange = [this]{ DBG("interpType "<< interpolationTypeBox.getSelectedId() - 1;); audioProcessor.sampleMangler.interpolationType = interpolationTypeBox.getSelectedId() - 1; };
+    interpolationTypeBox.setSelectedItemIndex(audioProcessor.sampleMangler.interpolationType);
+    interpolationTypeBox.setTooltip("This changes between different interpolation types... it might make a difference to sound quality, or it might not...");
     
     
     // Make sure that before the constructor has finished, you've set the
@@ -183,6 +185,6 @@ void Sjf_manglerAudioProcessorEditor::resized()
     phaseRateMultiplierBox.setBounds(hostSyncButton.getBounds().getX(), hostSyncButton.getBounds().getY()+hostSyncButton.getBounds().getHeight(), sliderHeight*3, sliderHeight);
     loadButton.setBounds(hostSyncButton.getBounds().getX()+hostSyncButton.getBounds().getWidth(), hostSyncButton.getBounds().getY(), playButton.getBounds().getWidth(), playButton.getBounds().getHeight());
     
-    interpolationTypeBox.setBounds(0, getHeight()-20, 60, 20);
+    interpolationTypeBox.setBounds(0, getHeight()-20, 120, 20);
     
 }

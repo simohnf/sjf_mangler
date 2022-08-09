@@ -152,7 +152,7 @@ private:
     juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel;
     juce::ComboBox phaseRateMultiplierBox, interpolationTypeBox;
     
-    juce::TooltipWindow tooltipWindow;
+    juce::TooltipWindow tooltipWindow {this, 700};
 
     
     sjf_numBox fadeLenNumBox, nSlicesNumBox, nStepsNumBox;
