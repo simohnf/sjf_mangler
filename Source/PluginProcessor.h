@@ -382,7 +382,7 @@ public:
     bool canPlay = false; bool randomOnLoopFlag = false; bool syncToHostFlag = false;
     bool revFlag = false; bool speedFlag = false; bool speedRampFlag = true;
     bool subDivFlag = false; bool ampFlag = false; bool stepShuffleFlag = false;
-    int interpolationType = 0;
+    int interpolationType = 1;
     
     juce::File samplePath;
     
@@ -574,11 +574,7 @@ public:
         
         read_pos = leftOver;
         stepCount %= nSteps;
-        
-//        DBG("sliceLenSamps " << sliceLenSamps);
-//        DBG("compensations " << phaseRateMultiplier * hostSyncCompenstation);
-//        DBG("compensated sliceLen " << sliceLenSamps/(increment));
-        
+
         for (int index = 0; index < bufferSize; index++)
         {
             checkForChangeOfBeat( stepCount );
@@ -589,7 +585,6 @@ public:
             auto speedVal = calculateSpeedVal( stepCount, (read_pos / sliceLenSamps) );
             while (pos >= subDivLenSamps){ pos -= subDivLenSamps; }
             auto env = envelope( floor(pos / increment) , floor(subDivLenSamps / increment), envLen ); // Check this out more
-//            DBG("pos " << floor(pos / increment) << " env " << env);
             auto amp = calculateAmpValue( stepCount );
             pos = calculateReverse(stepCount, pos, subDivLenSamps);
             pos *= speedVal;
@@ -607,7 +602,6 @@ public:
             while (read_pos >= sliceLenSamps){ read_pos -= sliceLenSamps; }
             
         }
-//        DBG("");
     };
     //==============================================================================
     void randomiseAll()
@@ -699,26 +693,26 @@ private:
     //==============================================================================
     float calculateSampleValue(juce::AudioBuffer<float>& buffer, int channel, float pos)
     {
-        if (interpolationType < 0) { interpolationType = 0; }
-        else if (interpolationType > 5) { interpolationType = 5; }
+        if (interpolationType < 1) { interpolationType = 1; }
+        else if (interpolationType > 6) { interpolationType = 6; }
         switch(interpolationType)
         {
-            case 0:
+            case 1:
                 return linearInterpolate(buffer, channel, pos);
                 break;
-            case 1:
+            case 2:
                 return cubicInterpolate(buffer, channel, pos);
                 break;
-            case 2:
+            case 3:
                 return fourPointInterpolatePD(buffer, channel, pos);
                 break;
-            case 3:
+            case 4:
                 return fourPointFourthOrderOptimal(buffer, channel, pos);
                 break;
-            case 4:
+            case 5:
                 return cubicInterpolateGodot(buffer, channel, pos);
                 break;
-            case 5:
+            case 6:
                 return cubicInterpolateHermite(buffer, channel, pos);
                 break;
         }
@@ -749,7 +743,6 @@ private:
             if (newDiff < lastDiff ) { multiplier = halfMultiplier;}
             multiplier = 1/multiplier;
         }
-        DBG("hostQuarterNoteSamps " << hostQuarterNoteSamps);
         return (sliceLenSamps*multiplier) / hostQuarterNoteSamps ;
     };
 
@@ -917,6 +910,7 @@ private:
     std::atomic<float>* randOnLoopParameter = nullptr;
     std::atomic<float>* syncToHostParameter = nullptr;
     std::atomic<float>* phaseRateMultiplierParameter = nullptr;
+    std::atomic<float>* interpolationTypeParameter = nullptr;
     
     std::atomic<float>* playStateParameter = nullptr;
     

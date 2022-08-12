@@ -124,7 +124,7 @@ class newLookAndFeel : public juce::LookAndFeel_V4
 //==============================================================================
 //==============================================================================
 //==============================================================================
-class Sjf_manglerAudioProcessorEditor  : public juce::AudioProcessorEditor
+class Sjf_manglerAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 {
 public:
     Sjf_manglerAudioProcessorEditor (Sjf_manglerAudioProcessor&, juce::AudioProcessorValueTreeState& vts);
@@ -139,17 +139,22 @@ public:
     typedef juce::AudioProcessorValueTreeState::ComboBoxAttachment ComboBoxAttachment;
     
 private:
+    
+    
     juce::AudioProcessorValueTreeState& valueTreeState;
     Sjf_manglerAudioProcessor& audioProcessor;
     
     newLookAndFeel otherLookAndFeel;
+    
+    void timerCallback() override;
+
 
     
     juce::TextButton loadButton, randomAllButton; 
     juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
-    juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel;
+    juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel, sampleNameLabel;
     juce::ComboBox phaseRateMultiplierBox, interpolationTypeBox;
     
     juce::TooltipWindow tooltipWindow {this, 700};
@@ -159,7 +164,7 @@ private:
     
     std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment, fadeLenAttachment;
     std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment, playButtonAttachment;
-    std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment;
+    std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment, interpolationTypeAttachment;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };

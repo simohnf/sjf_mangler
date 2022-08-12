@@ -35,7 +35,8 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
                  std::make_unique<juce::AudioParameterBool> ("play", "Play", true),
                  std::make_unique<juce::AudioParameterBool> ("syncToHost", "SyncToHost", true),
                  std::make_unique<juce::AudioParameterInt> ("phaseRateMultiplier", "PhaseRateMultiplier", 1, 5, 3),
-                 std::make_unique<juce::AudioParameterFloat> ("fade", "Fade", 0.01, 100, 1)
+                 std::make_unique<juce::AudioParameterFloat> ("fade", "Fade", 0.01, 100, 1),
+                 std::make_unique<juce::AudioParameterInt> ("interpolationType", "InterpolationType", 1, 6, 2)
              })
 {
     revParameter = parameters.getRawParameterValue("revProb");
@@ -53,6 +54,8 @@ Sjf_manglerAudioProcessor::Sjf_manglerAudioProcessor()
     playStateParameter = parameters.getRawParameterValue("play");
     
     phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
+    
+    interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
     
     filePathParameter = parameters.state.getPropertyAsValue("sampleFilePath", nullptr, true);
     
@@ -175,21 +178,31 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         buffer.clear (i, 0, buffer.getNumSamples());
 
 
-    
-
-    playHead = this->getPlayHead();
-    if (playHead != nullptr){
-        positionInfo = *playHead->getPosition();
-        if( positionInfo.getBpm() ){
-            float bpm = *positionInfo.getBpm();
-            if ( positionInfo.getIsPlaying() && sampleMangler.canPlay && sampleMangler.syncToHostFlag)
+    if (sampleMangler.canPlay)
+    {
+        if (!sampleMangler.syncToHostFlag){ sampleMangler.play(buffer); }
+        else{
+            playHead = this->getPlayHead();
+            if (playHead != nullptr)
             {
-                double pos = *positionInfo.getPpqPosition();
-                sampleMangler.play(buffer, bpm, pos);
+                positionInfo = *playHead->getPosition();
+                if( positionInfo.getBpm() )
+                {
+                    if ( positionInfo.getIsPlaying())
+                    {
+                        auto pos = *positionInfo.getPpqPosition();
+                        auto bpm = *positionInfo.getBpm();
+                        sampleMangler.play(buffer, bpm, pos);
+                    }
+                }
+                else { sampleMangler.play(buffer); }
             }
+            else { sampleMangler.play(buffer); }
         }
+        
+        
     }
-    if (sampleMangler.canPlay && !sampleMangler.syncToHostFlag){ sampleMangler.play(buffer); }
+    
     
 }
 
@@ -271,6 +284,9 @@ void Sjf_manglerAudioProcessor::checkParameters()
     }
     if (sampleMangler.canPlay != *playStateParameter){
         sampleMangler.canPlay = *playStateParameter;
+    }
+    if (sampleMangler.interpolationType != *interpolationTypeParameter){
+        sampleMangler.interpolationType = *interpolationTypeParameter;
     }
 }
 
