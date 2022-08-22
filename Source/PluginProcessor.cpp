@@ -177,7 +177,6 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-
     if (sampleMangler.canPlay)
     {
         if (!sampleMangler.syncToHostFlag){ sampleMangler.play(buffer); }
@@ -199,11 +198,7 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
             }
             else { sampleMangler.play(buffer); }
         }
-        
-        
     }
-    
-    
 }
 
 //==============================================================================

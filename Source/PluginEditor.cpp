@@ -130,9 +130,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     interpolationTypeBox.addItem("optimal", 4);
     interpolationTypeBox.addItem("godot", 5);
     interpolationTypeBox.addItem("Hermite", 6);
-//    interpolationTypeBox.onChange = [this]{ /* DBG("interpType "<< interpolationTypeBox.getSelectedId() - 1 );*/ audioProcessor.sampleMangler.interpolationType = interpolationTypeBox.getSelectedId() - 1; };
     interpolationTypeAttachment.reset(new ComboBoxAttachment(valueTreeState, "interpolationType", interpolationTypeBox));
-//    interpolationTypeBox.setSelectedItemIndex(audioProcessor.sampleMangler.interpolationType);
     interpolationTypeBox.setTooltip("This changes between different interpolation types... it might make a difference to sound quality, or it might not...");
     
 
