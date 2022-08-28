@@ -135,7 +135,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
 
     addAndMakeVisible(sampleNameLabel);
-    sampleNameLabel.setText(audioProcessor.sampleMangler.samplePath.getFileName(), juce::dontSendNotification);
+    sampleNameLabel.setText(audioProcessor.sampleMangler.m_samplePath.getFileName(), juce::dontSendNotification);
     startTimer(500);
     
     
@@ -153,7 +153,7 @@ Sjf_manglerAudioProcessorEditor::~Sjf_manglerAudioProcessorEditor()
 
 void Sjf_manglerAudioProcessorEditor::timerCallback()
 {
-    sampleNameLabel.setText(audioProcessor.sampleMangler.samplePath.getFileName(), juce::dontSendNotification);
+    sampleNameLabel.setText(audioProcessor.sampleMangler.m_samplePath.getFileName(), juce::dontSendNotification);
 }
 
 

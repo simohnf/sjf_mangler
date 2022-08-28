@@ -177,9 +177,9 @@ void Sjf_manglerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    if (sampleMangler.canPlay)
+    if (sampleMangler.m_canPlayFlag)
     {
-        if (!sampleMangler.syncToHostFlag){ sampleMangler.play(buffer); }
+        if (!sampleMangler.m_syncToHostFlag){ sampleMangler.play(buffer); }
         else{
             playHead = this->getPlayHead();
             if (playHead != nullptr)
@@ -215,7 +215,7 @@ juce::AudioProcessorEditor* Sjf_manglerAudioProcessor::createEditor()
 //==============================================================================
 void Sjf_manglerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    filePathParameter.setValue(sampleMangler.samplePath.getFullPathName());
+    filePathParameter.setValue(sampleMangler.m_samplePath.getFullPathName());
     auto state = parameters.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
@@ -239,25 +239,25 @@ void Sjf_manglerAudioProcessor::setStateInformation (const void* data, int sizeI
 
 void Sjf_manglerAudioProcessor::checkParameters()
 {
-    if (sampleMangler.revProb != *revParameter){
-        sampleMangler.revProb = *revParameter;
-        sampleMangler.revFlag = true;
+    if (sampleMangler.m_revProb != *revParameter){
+        sampleMangler.m_revProb = *revParameter;
+        sampleMangler.m_revFlag = true;
     }
-    if (sampleMangler.speedProb != *speedParameter){
-        sampleMangler.speedProb = *speedParameter;
-        sampleMangler.speedFlag = true;
+    if (sampleMangler.m_speedProb != *speedParameter){
+        sampleMangler.m_speedProb = *speedParameter;
+        sampleMangler.m_speedFlag = true;
     }
-    if (sampleMangler.subDivProb != *divParameter){
-        sampleMangler.subDivProb = *divParameter;
-        sampleMangler.subDivFlag = true;
+    if (sampleMangler.m_subDivProb != *divParameter){
+        sampleMangler.m_subDivProb = *divParameter;
+        sampleMangler.m_subDivFlag = true;
     }
-    if (sampleMangler.ampProb != *ampParameter){
-        sampleMangler.ampProb = *ampParameter;
-        sampleMangler.ampFlag = true;
+    if (sampleMangler.m_ampProb != *ampParameter){
+        sampleMangler.m_ampProb = *ampParameter;
+        sampleMangler.m_ampFlag = true;
     }
-    if (sampleMangler.stepShuffleProb != *shuffleParameter){
-        sampleMangler.stepShuffleProb = *shuffleParameter;
-        sampleMangler.stepShuffleFlag = true;
+    if (sampleMangler.m_stepShuffleProb != *shuffleParameter){
+        sampleMangler.m_stepShuffleProb = *shuffleParameter;
+        sampleMangler.m_stepShuffleFlag = true;
     }
     if (sampleMangler.getNumSlices() != *nSlicesParameter){
         sampleMangler.setNumSlices( *nSlicesParameter );
@@ -268,20 +268,20 @@ void Sjf_manglerAudioProcessor::checkParameters()
     if (sampleMangler.getFadeInMs() != *fadeParameter){
         sampleMangler.setFadeLenMs( *fadeParameter );
     }
-    if (sampleMangler.randomOnLoopFlag != *randOnLoopParameter){
-        sampleMangler.randomOnLoopFlag = *randOnLoopParameter;
+    if (sampleMangler.m_randomOnLoopFlag != *randOnLoopParameter){
+        sampleMangler.m_randomOnLoopFlag = *randOnLoopParameter;
     }
-    if (sampleMangler.syncToHostFlag != *syncToHostParameter){
-        sampleMangler.syncToHostFlag = *syncToHostParameter;
+    if (sampleMangler.m_syncToHostFlag != *syncToHostParameter){
+        sampleMangler.m_syncToHostFlag = *syncToHostParameter;
     }
     if (sampleMangler.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
         sampleMangler.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
     }
-    if (sampleMangler.canPlay != *playStateParameter){
-        sampleMangler.canPlay = *playStateParameter;
+    if (sampleMangler.m_canPlayFlag != *playStateParameter){
+        sampleMangler.m_canPlayFlag = *playStateParameter;
     }
-    if (sampleMangler.interpolationType != *interpolationTypeParameter){
-        sampleMangler.interpolationType = *interpolationTypeParameter;
+    if (sampleMangler.m_interpolationType != *interpolationTypeParameter){
+        sampleMangler.m_interpolationType = *interpolationTypeParameter;
     }
 }
 
