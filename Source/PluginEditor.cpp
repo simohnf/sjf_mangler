@@ -8,43 +8,16 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#define textHeight 20
+#define potSize 80
+#define indent 10
 
 //==============================================================================
 Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
-    : AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
+: AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
 {
-    addAndMakeVisible (loadButton);
-    loadButton.setButtonText ("Load\nAudio\nSample");
-    loadButton.onClick = [this] { audioProcessor.loadButtonClicked() ; };
-    loadButton.setTooltip("This allows you to select and load a new audio sample (NOTE: it will stop the playback)");
-    
-    addAndMakeVisible (playButton);
-    playButtonAttachment.reset(new ButtonAttachment(valueTreeState, "play", playButton));
-    playButton.setButtonText ("Play");
-    playButton.onClick = [this] { audioProcessor.playButtonClicked( playButton.getToggleState() ) ;};
-    playButton.setTooltip("This starts the audio sample playback");
-    playButton.setLookAndFeel(&otherLookAndFeel);
-    
-    
-    addAndMakeVisible (hostSyncButton);
-    hostSyncAttachment.reset(new ButtonAttachment(valueTreeState, "syncToHost", hostSyncButton));
-    hostSyncButton.setButtonText ("Sync");
-    hostSyncButton.setTooltip("This will synchronise the playback to the host's BPM and playback position");
-    hostSyncButton.setLookAndFeel(&otherLookAndFeel);
-    
-    
-    
-    addAndMakeVisible (randomAllButton);
-    randomAllButton.setButtonText ("Random");
-    randomAllButton.onClick = [this] { audioProcessor.sampleMangler.randomiseAll() ;};
-    randomAllButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen)");
-    
-    addAndMakeVisible (randomOnLoopButton);
-    randomOnLoopAttachment.reset(new ButtonAttachment(valueTreeState, "randomOnLoop", randomOnLoopButton));
-    randomOnLoopButton.setButtonText ("Randomise On Loop");
-    randomOnLoopButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen) everytime the pattern loops");
-    randomOnLoopButton.setLookAndFeel(&otherLookAndFeel);
-    
+//    getLookAndFeel().setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey.withAlpha(0.2f));
+//    getLookAndFeel().setColour(juce::ComboBox::backgroundColourId, juce::Colours::darkgrey.withAlpha(0.2f));
     
     addAndMakeVisible (revProbSlider);
     revProbAttachment.reset(new SliderAttachment (valueTreeState, "revProb", revProbSlider));
@@ -92,6 +65,46 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     stepShuffleProbLabel.setTooltip("This sets the likelyhood of a different slice being played at any given step --> e.g. instead of playing the first slice being played on the first step the  2nd/3rd/last/etc. slice might be played instead");
     
     
+    
+    
+    addAndMakeVisible (loadButton);
+    loadButton.setButtonText ("Load\nAudio\nSample");
+    loadButton.onClick = [this] { audioProcessor.loadButtonClicked() ; };
+    loadButton.setTooltip("This allows you to select and load a new audio sample (NOTE: it will stop the playback)");
+    loadButton.setLookAndFeel( &otherLookAndFeel );
+    
+    addAndMakeVisible (playButton);
+    playButtonAttachment.reset(new ButtonAttachment(valueTreeState, "play", playButton));
+    playButton.setButtonText ("Play");
+    playButton.onClick = [this] { audioProcessor.playButtonClicked( playButton.getToggleState() ) ;};
+    playButton.setTooltip("This starts the audio sample playback");
+    playButton.setLookAndFeel(&otherLookAndFeel);
+    playButton.setLookAndFeel( &otherLookAndFeel );
+    
+    addAndMakeVisible (hostSyncButton);
+    hostSyncAttachment.reset(new ButtonAttachment(valueTreeState, "syncToHost", hostSyncButton));
+    hostSyncButton.setButtonText ("Sync");
+    hostSyncButton.setTooltip("This will synchronise the playback to the host's BPM and playback position");
+    hostSyncButton.setLookAndFeel(&otherLookAndFeel);
+    hostSyncButton.setLookAndFeel( &otherLookAndFeel );
+    
+    
+    addAndMakeVisible (randomAllButton);
+    randomAllButton.setButtonText ("Random");
+    randomAllButton.onClick = [this] { audioProcessor.sampleMangler.randomiseAll() ;};
+    randomAllButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen)");
+    randomAllButton.setLookAndFeel( &otherLookAndFeel );
+    
+    addAndMakeVisible (randomOnLoopButton);
+    randomOnLoopAttachment.reset(new ButtonAttachment(valueTreeState, "randomOnLoop", randomOnLoopButton));
+    randomOnLoopButton.setButtonText ("Randomise On Loop");
+    randomOnLoopButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen) everytime the pattern loops");
+    randomOnLoopButton.setLookAndFeel(&otherLookAndFeel);
+    randomOnLoopButton.setLookAndFeel( &otherLookAndFeel );
+    
+ 
+    
+    
     addAndMakeVisible (nSlicesNumBox);
     nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesNumBox));
     addAndMakeVisible (nSlicesLabel);
@@ -122,6 +135,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     phaseRateMultiplierBox.addItem("*4", 5);
     phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
     phaseRateMultiplierBox.setTooltip("This alters the playback speed");
+    phaseRateMultiplierBox.setLookAndFeel( &otherLookAndFeel );
     
     addAndMakeVisible(interpolationTypeBox);
     interpolationTypeBox.addItem("linear", 1);
@@ -132,16 +146,34 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     interpolationTypeBox.addItem("Hermite", 6);
     interpolationTypeAttachment.reset(new ComboBoxAttachment(valueTreeState, "interpolationType", interpolationTypeBox));
     interpolationTypeBox.setTooltip("This changes between different interpolation types... it might make a difference to sound quality, or it might not...");
-    
+    interpolationTypeBox.setLookAndFeel( &otherLookAndFeel );
 
+    addAndMakeVisible(&tooltipsToggle);
+    tooltipsToggle.setButtonText("Hints");
+    tooltipsToggle.onStateChange = [this]
+    {
+        if (tooltipsToggle.getToggleState())
+        {
+            tooltipWindow.getObject().setAlpha(1.0f);
+        }
+        else
+        {
+            tooltipWindow.getObject().setAlpha(0.0f);
+        }
+    };
+    tooltipWindow.getObject().setAlpha(0.0f);
+    tooltipsToggle.setLookAndFeel(&otherLookAndFeel);
+    
     addAndMakeVisible(sampleNameLabel);
     sampleNameLabel.setText(audioProcessor.sampleMangler.m_samplePath.getFileName(), juce::dontSendNotification);
+    sampleNameLabel.setJustificationType( juce::Justification::centred );
+    
     startTimer(500);
     
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize (potSize*5+indent*2, potSize*3+textHeight*2);
 }
 
 Sjf_manglerAudioProcessorEditor::~Sjf_manglerAudioProcessorEditor()
@@ -160,44 +192,44 @@ void Sjf_manglerAudioProcessorEditor::timerCallback()
 void Sjf_manglerAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+//    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    juce::Rectangle<int> r = getLocalBounds();
+    sjf_makeBackground< 30 >( g, r );
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText("sjf_mangler", (getWidth()/2.0f) - 50, 0, 100, 20, juce::Justification::centred, 1);
+    g.drawFittedText("sjf_mangler", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
 }
 
 void Sjf_manglerAudioProcessorEditor::resized()
 {
-    auto leftIndent = 65.0f;
-    auto topIndent = 40.0f;
-    auto sliderHeight = 20.0f;
-    auto buttonSize = 20.0f;
-    auto slideLength = 330.0f;
+//    auto leftIndent = 65.0f;
+//    auto topIndent = 40.0f;
+//    auto sliderHeight = 20.0f;
+//    auto buttonSize = 20.0f;
+    auto slideLength = potSize*4;
     auto sliderInternalOffset = 8.0f;
     
-    revProbSlider.setBounds(leftIndent, topIndent, slideLength, sliderHeight);
-    speedProbSlider.setBounds(leftIndent, topIndent + 1*sliderHeight, slideLength, sliderHeight);
-    subDivProbSlider.setBounds(leftIndent, topIndent + 2*sliderHeight, slideLength, sliderHeight);
-    ampProbSlider.setBounds(leftIndent, topIndent + 3*sliderHeight, slideLength, sliderHeight);
-    stepShuffleProbSlider.setBounds(leftIndent, topIndent + 4*sliderHeight, slideLength, sliderHeight);
+    revProbSlider.setBounds(potSize, textHeight, slideLength, textHeight);
+    speedProbSlider.setBounds(revProbSlider.getX(), revProbSlider.getBottom(), slideLength, textHeight);
+    subDivProbSlider.setBounds(speedProbSlider.getX(), speedProbSlider.getBottom(), slideLength, textHeight);
+    ampProbSlider.setBounds(subDivProbSlider.getX(), subDivProbSlider.getBottom(), slideLength, textHeight);
+    stepShuffleProbSlider.setBounds(ampProbSlider.getX(), ampProbSlider.getBottom(), slideLength, textHeight);
     
     
-    randomAllButton.setBounds(leftIndent, stepShuffleProbSlider.getBounds().getY()+stepShuffleProbSlider.getBounds().getHeight(), buttonSize*4, sliderHeight*2);
-    randomOnLoopButton.setBounds(randomAllButton.getBounds().getX() + randomAllButton.getBounds().getWidth() + sliderInternalOffset, randomAllButton.getBounds().getY(), stepShuffleProbSlider.getBounds().getWidth() - randomAllButton.getBounds().getWidth() - 2*sliderInternalOffset, sliderHeight*2);
+    randomAllButton.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom() + textHeight, potSize, textHeight*2);
+    randomOnLoopButton.setBounds(randomAllButton.getRight() + sliderInternalOffset, randomAllButton.getBounds().getY(), potSize*3, textHeight*2);
     
+    nSlicesNumBox.setBounds(randomAllButton.getX(), randomOnLoopButton.getBottom(), potSize, textHeight);
+    nStepsNumBox.setBounds(nSlicesNumBox.getX(), nSlicesNumBox.getBottom(), potSize, textHeight);
+    fadeLenNumBox.setBounds(nStepsNumBox.getX(), nStepsNumBox.getBottom(), potSize, textHeight);
+    interpolationTypeBox.setBounds(fadeLenNumBox.getX(), fadeLenNumBox.getBottom(), potSize, textHeight);
     
-    nSlicesNumBox.setBounds(leftIndent, topIndent + 8*sliderHeight, sliderHeight*4, sliderHeight);
-    nStepsNumBox.setBounds(leftIndent, topIndent + 9*sliderHeight, sliderHeight*4, sliderHeight);
-    fadeLenNumBox.setBounds(leftIndent, topIndent + 10*sliderHeight, sliderHeight*4, sliderHeight);
+    playButton.setBounds(randomOnLoopButton.getX(), nSlicesNumBox.getY(), randomOnLoopButton.getWidth()/3, potSize);
+    hostSyncButton.setBounds(playButton.getRight(), playButton.getY(), playButton.getWidth(), 3*potSize/4);
+    phaseRateMultiplierBox.setBounds(hostSyncButton.getX(), hostSyncButton.getBottom(), hostSyncButton.getWidth(), textHeight);
+    loadButton.setBounds(hostSyncButton.getRight(), hostSyncButton.getY(), playButton.getWidth(), hostSyncButton.getHeight());
+    tooltipsToggle.setBounds( loadButton.getX(), loadButton.getBottom(), potSize, textHeight );
     
-    
-    
-    playButton.setBounds(nSlicesNumBox.getBounds().getX() + nSlicesNumBox.getBounds().getWidth() + sliderHeight, nSlicesNumBox.getBounds().getY(), sliderHeight*4, sliderHeight*4);
-    hostSyncButton.setBounds(playButton.getBounds().getX() + playButton.getBounds().getWidth(), playButton.getBounds().getY(), sliderHeight*3, sliderHeight*3);
-    phaseRateMultiplierBox.setBounds(hostSyncButton.getBounds().getX(), hostSyncButton.getBounds().getY()+hostSyncButton.getBounds().getHeight(), sliderHeight*3, sliderHeight);
-    loadButton.setBounds(hostSyncButton.getBounds().getX()+hostSyncButton.getBounds().getWidth(), hostSyncButton.getBounds().getY(), playButton.getBounds().getWidth(), playButton.getBounds().getHeight());
-    
-    interpolationTypeBox.setBounds(0, getHeight()-20, 120, 20);
-    sampleNameLabel.setBounds(interpolationTypeBox.getBounds().getX()+interpolationTypeBox.getBounds().getWidth(), interpolationTypeBox.getBounds().getY(), getWidth() - sampleNameLabel.getBounds().getX(), 20);
+    sampleNameLabel.setBounds( indent, interpolationTypeBox.getBottom(), getWidth(), textHeight);
 }

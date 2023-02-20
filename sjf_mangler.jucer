@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="hEt8Ek" name="sjfMangler" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="hEt8Ek" name="sjf_mangler" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" version="0.0.1"
-              pluginManufacturer="sjf" pluginFormats="buildVST3" displaySplashScreen="1">
-  <MAINGROUP id="a92XUt" name="sjfMangler">
+              pluginManufacturer="sjf" pluginFormats="buildAU,buildVST3" displaySplashScreen="1"
+              pluginName="sjf_mangler" pluginDesc="sjf_mangler" companyWebsite="sjf">
+  <MAINGROUP id="a92XUt" name="sjf_mangler">
     <GROUP id="{8DF3F71E-16CF-3454-BC6B-BF7E7F59DB46}" name="Source">
       <FILE id="V58qb9" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>

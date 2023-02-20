@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_numBox.h"
+#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_lookAndFeel.h"
 
 //==============================================================================
 /**
@@ -91,20 +92,19 @@ private:
     juce::AudioProcessorValueTreeState& valueTreeState;
     Sjf_manglerAudioProcessor& audioProcessor;
     
-    newLookAndFeel otherLookAndFeel;
+    sjf_lookAndFeel otherLookAndFeel;
     
     void timerCallback() override;
 
 
     
     juce::TextButton loadButton, randomAllButton; 
-    juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton;
+    juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton, tooltipsToggle;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
     juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
     juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel, sampleNameLabel;
     juce::ComboBox phaseRateMultiplierBox, interpolationTypeBox;
     
-    juce::TooltipWindow tooltipWindow {this, 700};
 
     
     sjf_numBox fadeLenNumBox, nSlicesNumBox, nStepsNumBox;
@@ -112,6 +112,8 @@ private:
     std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment, fadeLenAttachment;
     std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment, playButtonAttachment;
     std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment, interpolationTypeAttachment;
+    
+    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };
