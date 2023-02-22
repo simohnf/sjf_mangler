@@ -19,55 +19,60 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
 //    getLookAndFeel().setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey.withAlpha(0.2f));
 //    getLookAndFeel().setColour(juce::ComboBox::backgroundColourId, juce::Colours::darkgrey.withAlpha(0.2f));
     
-    
+    setLookAndFeel( &otherLookAndFeel );
     
     addAndMakeVisible (revProbSlider);
     revProbAttachment.reset(new SliderAttachment (valueTreeState, "revProb", revProbSlider));
+    revProbSlider.setSliderStyle( juce::Slider::LinearBar );
     revProbSlider.setTextValueSuffix ("%");
     revProbSlider.setTooltip("This sets the likelyhood of a step being played in reverse");
     revProbSlider.sendLookAndFeelChange();
     addAndMakeVisible (revProbLabel);
-    revProbLabel.setText ("RevProb", juce::dontSendNotification);
+    revProbLabel.setText ("reverse", juce::dontSendNotification);
     revProbLabel.attachToComponent (&revProbSlider, true);
     revProbLabel.setTooltip("This sets the likelyhood of a step being played in reverse");
     
     addAndMakeVisible (speedProbSlider);
     speedProbAttachment.reset(new SliderAttachment (valueTreeState, "speedProb", speedProbSlider));
+    speedProbSlider.setSliderStyle( juce::Slider::LinearBar );
     speedProbSlider.setTextValueSuffix ("%");
     speedProbSlider.setTooltip("This sets the likelyhood of a step being played at a different speed and pitch");
     speedProbSlider.sendLookAndFeelChange();
     addAndMakeVisible (speedProbLabel);
-    speedProbLabel.setText ("SpeedProb", juce::dontSendNotification);
+    speedProbLabel.setText ("speed", juce::dontSendNotification);
     speedProbLabel.attachToComponent (&speedProbSlider, true);
     speedProbLabel.setTooltip("This sets the likelyhood of a step being played at a different speed and pitch");
     
     addAndMakeVisible (subDivProbSlider);
     subDivProbAttachment.reset(new SliderAttachment (valueTreeState, "divProb", subDivProbSlider));
+    subDivProbSlider.setSliderStyle( juce::Slider::LinearBar );
     subDivProbSlider.setTextValueSuffix ("%");
     subDivProbSlider.setTooltip("This sets the likelyhood of a slice being subdivided (e.g. half as long) and for the first of these subdivisions being repeated with an increasing/decreasing amplitude ramp");
     subDivProbSlider.sendLookAndFeelChange();
     addAndMakeVisible (subDivProbLabel);
-    subDivProbLabel.setText ("subDivProb", juce::dontSendNotification);
+    subDivProbLabel.setText ("divisions", juce::dontSendNotification);
     subDivProbLabel.attachToComponent (&subDivProbSlider, true);
     subDivProbLabel.setTooltip("This sets the likelyhood of a slice being subdivided (e.g. half as long) and for the first of these subdivisions being repeated with an increasing/decreasing amplitude ramp");
     
     addAndMakeVisible (ampProbSlider);
     ampProbAttachment.reset(new SliderAttachment (valueTreeState, "ampProb", ampProbSlider));
+    ampProbSlider.setSliderStyle( juce::Slider::LinearBar );
     ampProbSlider.setTextValueSuffix ("%");
     ampProbSlider.setTooltip("This sets the likelyhood of a step having a lower than normal amplitude");
     ampProbSlider.sendLookAndFeelChange();
     addAndMakeVisible (ampProbLabel);
-    ampProbLabel.setText ("ampProb", juce::dontSendNotification);
+    ampProbLabel.setText ("amplitude", juce::dontSendNotification);
     ampProbLabel.attachToComponent (&ampProbSlider, true);
     ampProbLabel.setTooltip("This sets the likelyhood of a step having a lower than normal amplitude");
     
     addAndMakeVisible (stepShuffleProbSlider);
     shuffleProbAttachment.reset(new SliderAttachment (valueTreeState, "shuffleProb", stepShuffleProbSlider));
+    stepShuffleProbSlider.setSliderStyle( juce::Slider::LinearBar );
     stepShuffleProbSlider.setTextValueSuffix ("%");
     stepShuffleProbSlider.setTooltip("This sets the likelyhood of a different slice being played at any given step --> e.g. instead of playing the first slice being played on the first step the  2nd/3rd/last/etc. slice might be played instead");
     stepShuffleProbSlider.sendLookAndFeelChange();
     addAndMakeVisible (stepShuffleProbLabel);
-    stepShuffleProbLabel.setText ("shuffleProb", juce::dontSendNotification);
+    stepShuffleProbLabel.setText ("shuffle", juce::dontSendNotification);
     stepShuffleProbLabel.attachToComponent (&stepShuffleProbSlider, true);
     stepShuffleProbLabel.setTooltip("This sets the likelyhood of a different slice being played at any given step --> e.g. instead of playing the first slice being played on the first step the  2nd/3rd/last/etc. slice might be played instead");
     
@@ -75,14 +80,14 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     
     addAndMakeVisible (loadButton);
-    loadButton.setButtonText ("Load\nAudio\nSample");
+    loadButton.setButtonText ("load\naudio\nsample");
     loadButton.onClick = [this] { audioProcessor.loadButtonClicked() ; };
     loadButton.setTooltip("This allows you to select and load a new audio sample (NOTE: it will stop the playback)");
     loadButton.setLookAndFeel( &otherLookAndFeel );
     
     addAndMakeVisible (playButton);
     playButtonAttachment.reset(new ButtonAttachment(valueTreeState, "play", playButton));
-    playButton.setButtonText ("Play");
+    playButton.setButtonText ("play");
     playButton.onClick = [this] { audioProcessor.playButtonClicked( playButton.getToggleState() ) ;};
     playButton.setTooltip("This starts the audio sample playback");
     playButton.setLookAndFeel(&otherLookAndFeel);
@@ -90,21 +95,21 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     
     addAndMakeVisible (hostSyncButton);
     hostSyncAttachment.reset(new ButtonAttachment(valueTreeState, "syncToHost", hostSyncButton));
-    hostSyncButton.setButtonText ("Sync");
+    hostSyncButton.setButtonText ("sync");
     hostSyncButton.setTooltip("This will synchronise the playback to the host's BPM and playback position");
     hostSyncButton.setLookAndFeel(&otherLookAndFeel);
     hostSyncButton.setLookAndFeel( &otherLookAndFeel );
     
     
     addAndMakeVisible (randomAllButton);
-    randomAllButton.setButtonText ("Random");
+    randomAllButton.setButtonText ("random");
     randomAllButton.onClick = [this] { audioProcessor.sampleMangler.randomiseAll() ;};
     randomAllButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen)");
     randomAllButton.setLookAndFeel( &otherLookAndFeel );
     
     addAndMakeVisible (randomOnLoopButton);
     randomOnLoopAttachment.reset(new ButtonAttachment(valueTreeState, "randomOnLoop", randomOnLoopButton));
-    randomOnLoopButton.setButtonText ("Randomise On Loop");
+    randomOnLoopButton.setButtonText ("randomise on loop");
     randomOnLoopButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen) everytime the pattern loops");
     randomOnLoopButton.setLookAndFeel(&otherLookAndFeel);
     randomOnLoopButton.setLookAndFeel( &otherLookAndFeel );
@@ -153,7 +158,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     interpolationTypeBox.addItem("PD", 3);
     interpolationTypeBox.addItem("optimal", 4);
     interpolationTypeBox.addItem("godot", 5);
-    interpolationTypeBox.addItem("Hermite", 6);
+    interpolationTypeBox.addItem("hermite", 6);
     interpolationTypeAttachment.reset(new ComboBoxAttachment(valueTreeState, "interpolationType", interpolationTypeBox));
     interpolationTypeBox.setTooltip("This changes between different interpolation types... it might make a difference to sound quality, or it might not...");
     interpolationTypeBox.setLookAndFeel( &otherLookAndFeel );
@@ -188,6 +193,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
 
 Sjf_manglerAudioProcessorEditor::~Sjf_manglerAudioProcessorEditor()
 {
+    setLookAndFeel (nullptr);
 }
 
 
@@ -203,10 +209,10 @@ void Sjf_manglerAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
 //    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-//    juce::Rectangle<int> r = getLocalBounds();
-//    sjf_makeBackground< 30 >( g, r );
+    juce::Rectangle<int> r = getLocalBounds();
+    sjf_makeBackground< 40 >( g, r );
 
-    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
+//    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
     g.drawFittedText("sjf_mangler", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
@@ -219,7 +225,7 @@ void Sjf_manglerAudioProcessorEditor::resized()
 //    auto sliderHeight = 20.0f;
 //    auto buttonSize = 20.0f;
     auto slideLength = potSize*4;
-    auto sliderInternalOffset = 8.0f;
+//    auto sliderInternalOffset = 8.0f;
     
     revProbSlider.setBounds(potSize, textHeight, slideLength, textHeight);
     speedProbSlider.setBounds(revProbSlider.getX(), revProbSlider.getBottom(), slideLength, textHeight);
@@ -229,7 +235,7 @@ void Sjf_manglerAudioProcessorEditor::resized()
     
     
     randomAllButton.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom() + textHeight, potSize, textHeight*2);
-    randomOnLoopButton.setBounds(randomAllButton.getRight() + sliderInternalOffset, randomAllButton.getBounds().getY(), potSize*3, textHeight*2);
+    randomOnLoopButton.setBounds(randomAllButton.getRight() + indent, randomAllButton.getBounds().getY(), potSize*3 - indent, textHeight*2);
     
     nSlicesNumBox.setBounds(randomAllButton.getX(), randomOnLoopButton.getBottom(), potSize, textHeight);
     nStepsNumBox.setBounds(nSlicesNumBox.getX(), nSlicesNumBox.getBottom(), potSize, textHeight);
@@ -240,7 +246,7 @@ void Sjf_manglerAudioProcessorEditor::resized()
     hostSyncButton.setBounds(playButton.getRight(), playButton.getY(), playButton.getWidth(), 3*potSize/4);
     phaseRateMultiplierBox.setBounds(hostSyncButton.getX(), hostSyncButton.getBottom(), hostSyncButton.getWidth(), textHeight);
     loadButton.setBounds(hostSyncButton.getRight(), hostSyncButton.getY(), playButton.getWidth(), hostSyncButton.getHeight());
-    tooltipsToggle.setBounds( loadButton.getX(), loadButton.getBottom(), potSize, textHeight );
+    tooltipsToggle.setBounds( loadButton.getX(), loadButton.getBottom(), playButton.getWidth(), textHeight );
     
     sampleNameLabel.setBounds( indent, interpolationTypeBox.getBottom(), getWidth(), textHeight);
 }
