@@ -5,6 +5,18 @@
               pluginManufacturer="sjf" pluginFormats="buildAU,buildVST3" displaySplashScreen="1"
               pluginName="sjf_mangler" pluginDesc="sjf_mangler" companyWebsite="sjf">
   <MAINGROUP id="a92XUt" name="sjf_mangler">
+    <GROUP id="{2AE3B9EF-05BE-7704-782C-0C1FD158BB53}" name="New Group">
+      <FILE id="WXVL1X" name="primes1.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes1.png"
+            xcodeResource="1"/>
+      <FILE id="itz3Ur" name="primes2.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes2.png"
+            xcodeResource="1"/>
+      <FILE id="uJGqri" name="primes3.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes3.png"
+            xcodeResource="1"/>
+      <FILE id="yKgHHZ" name="primes4.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes4.png"
+            xcodeResource="1"/>
+      <FILE id="iewew8" name="Tree1.png" compile="0" resource="1" file="../sjf_audio/algoImages/Tree1.png"
+            xcodeResource="1"/>
+    </GROUP>
     <GROUP id="{8DF3F71E-16CF-3454-BC6B-BF7E7F59DB46}" name="Source">
       <FILE id="V58qb9" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
