@@ -215,7 +215,7 @@ juce::AudioProcessorEditor* Sjf_manglerAudioProcessor::createEditor()
 //==============================================================================
 void Sjf_manglerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    filePathParameter.setValue(sampleMangler.m_samplePath.getFullPathName());
+    filePathParameter.setValue( sampleMangler.getFilePath() );
     auto state = parameters.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);

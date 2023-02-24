@@ -112,7 +112,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     randomOnLoopButton.setButtonText ("randomise on loop");
     randomOnLoopButton.setTooltip("This will generate a new pattern of random variations (based on the variation settings chosen) everytime the pattern loops");
     randomOnLoopButton.setLookAndFeel(&otherLookAndFeel);
-    randomOnLoopButton.setLookAndFeel( &otherLookAndFeel );
+//    randomOnLoopButton.setLookAndFeel( &otherLookAndFeel );
     
  
     
@@ -180,7 +180,7 @@ Sjf_manglerAudioProcessorEditor::Sjf_manglerAudioProcessorEditor (Sjf_manglerAud
     tooltipsToggle.setLookAndFeel(&otherLookAndFeel);
     
     addAndMakeVisible(sampleNameLabel);
-    sampleNameLabel.setText(audioProcessor.sampleMangler.m_samplePath.getFileName(), juce::dontSendNotification);
+    sampleNameLabel.setText(audioProcessor.sampleMangler.getFileName(), juce::dontSendNotification);
     sampleNameLabel.setJustificationType( juce::Justification::centred );
     
     startTimer(500);
@@ -201,7 +201,7 @@ Sjf_manglerAudioProcessorEditor::~Sjf_manglerAudioProcessorEditor()
 
 void Sjf_manglerAudioProcessorEditor::timerCallback()
 {
-    sampleNameLabel.setText(audioProcessor.sampleMangler.m_samplePath.getFileName(), juce::dontSendNotification);
+    sampleNameLabel.setText(audioProcessor.sampleMangler.getFileName(), juce::dontSendNotification);
 }
 
 
