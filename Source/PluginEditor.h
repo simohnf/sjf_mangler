@@ -100,8 +100,7 @@ private:
     juce::TextButton loadButton, randomAllButton; 
     juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton, tooltipsToggle;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider;
-    juce::Label revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel;
-    juce::Label nSlicesLabel, nStepsLabel, fadeLenLabel, sampleNameLabel;
+    juce::Label /*revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel, nSlicesLabel, nStepsLabel, fadeLenLabel, sampleNameLabel,*/ tooltipLabel;
     juce::ComboBox phaseRateMultiplierBox, interpolationTypeBox;
     
 
@@ -112,12 +111,14 @@ private:
     std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment, playButtonAttachment;
     std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment, interpolationTypeAttachment;
     
-    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
+    juce::String MAIN_TOOLTIP = "sjf_mangler: \nRandomised sample editor\n\n1) load a sample \n2) turn on play (NB if sync is set you need to start the transport) \n3) play with the controls to get randomised variations";
+    
+    //    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
 //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes1_png, BinaryData::primes1_pngSize );
 //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes2_png, BinaryData::primes2_pngSize );
-            juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize );
-    //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes4_png, BinaryData::primes4_pngSize );
-    //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::Tree1_png, BinaryData::Tree1_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes4_png, BinaryData::primes4_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::Tree1_png, BinaryData::Tree1_pngSize );
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_manglerAudioProcessorEditor)
 };
