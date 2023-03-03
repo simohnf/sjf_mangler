@@ -1,41 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="hEt8Ek" name="sjf_mangler" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginManufacturer="sjf"
-              pluginFormats="buildAU,buildAUv3,buildVST3" displaySplashScreen="1"
-              pluginName="sjf_mangler" pluginDesc="sjf_mangler" companyWebsite="sjf"
-              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
-  <MAINGROUP id="a92XUt" name="sjf_mangler">
-    <GROUP id="{2AE3B9EF-05BE-7704-782C-0C1FD158BB53}" name="New Group">
-      <FILE id="WXVL1X" name="primes1.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes1.png"
-            xcodeResource="1"/>
-      <FILE id="itz3Ur" name="primes2.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes2.png"
-            xcodeResource="1"/>
-      <FILE id="uJGqri" name="primes3.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes3.png"
-            xcodeResource="1"/>
-      <FILE id="yKgHHZ" name="primes4.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes4.png"
-            xcodeResource="1"/>
-      <FILE id="iewew8" name="Tree1.png" compile="0" resource="1" file="../sjf_audio/algoImages/Tree1.png"
-            xcodeResource="1"/>
-    </GROUP>
-    <GROUP id="{8DF3F71E-16CF-3454-BC6B-BF7E7F59DB46}" name="Source">
-      <FILE id="V58qb9" name="PluginProcessor.cpp" compile="1" resource="0"
+<JUCERPROJECT id="lJUPWX" name="sjf_mangler2" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              pluginFormats="buildAU,buildAUv3,buildVST3" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
+              pluginManufacturer="sjf">
+  <MAINGROUP id="W4BSq7" name="sjf_mangler2">
+    <GROUP id="{136AE3B4-C3E9-0A36-0584-0A6AA919F8CE}" name="Source">
+      <FILE id="ICC0MR" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
-      <FILE id="qkMfSY" name="PluginProcessor.h" compile="0" resource="0"
+      <FILE id="rlrc05" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
-      <FILE id="GpiRgQ" name="PluginEditor.cpp" compile="1" resource="0"
+      <FILE id="vlxiwl" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
-      <FILE id="q2mubH" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="WQemEE" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="sjf_mangler" macOSDeploymentTarget="10.9"
-                       osxCompatibility="10.9 SDK"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="sjf_mangler" osxCompatibility="10.13 SDK"
-                       fastMath="1" optimisation="6" macOSDeploymentTarget="10.13"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="sjf_mangler2"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="sjf_mangler2" optimisation="6"
+                       fastMath="1"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../JUCE/modules"/>
@@ -46,7 +32,6 @@
         <MODULEPATH id="juce_audio_utils" path="../../JUCE/modules"/>
         <MODULEPATH id="juce_core" path="../../JUCE/modules"/>
         <MODULEPATH id="juce_data_structures" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_dsp" path="../../JUCE/modules"/>
         <MODULEPATH id="juce_events" path="../../JUCE/modules"/>
         <MODULEPATH id="juce_graphics" path="../../JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../../JUCE/modules"/>
@@ -64,7 +49,6 @@
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
