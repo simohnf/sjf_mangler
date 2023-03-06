@@ -88,7 +88,7 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     loadButton.setButtonText ("load\naudio\nsample");
     loadButton.onClick = [this]
     {
-        int currentVoice = std::max( voiceComboBox.getSelectedId(), 1 );
+        int currentVoice = voiceComboBox.getSelectedId() > 0 ? voiceComboBox.getSelectedId()-1 : 0 ;
         audioProcessor.loadButtonClicked( currentVoice ) ;
     };
     loadButton.setTooltip("This allows you to select and load a new audio sample (NOTE: it will stop the playback)");
@@ -128,14 +128,16 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     
     addAndMakeVisible (nSlicesNumBox);
     //    nSlicesAttachment.reset(new SliderAttachment (valueTreeState, "numSlices", nSlicesNumBox));
+    juce::Range< double > sliceRange( 1 , 1024 );
+    nSlicesNumBox.setRange( sliceRange, 1 );
     nSlicesNumBox.onValueChange = [this]
     {
+        
         int currentVoice = std::max( voiceComboBox.getSelectedId(), 1 );
-        audioProcessor.sampleMangler2.setNumSlices( nSlicesNumBox.getValue(), currentVoice );
+        audioProcessor.sampleMangler2.setNumSlices( nSlicesNumBox.getValue(), currentVoice - 1 );
+        DBG("SLIDER CHANGED " << currentVoice - 1 );
     };
-    //    addAndMakeVisible (nSlicesLabel);
-    //    nSlicesLabel.setText ("slices", juce::dontSendNotification);
-    //    nSlicesLabel.attachToComponent (&nSlicesNumBox, true);
+
     nSlicesNumBox.setTooltip("This determines the number of divisions the audio sample is cut up into. More slices means more divisions, therefore shorter variations. Fewer slices means longer divisions and therefore longer variations");
     nSlicesNumBox.sendLookAndFeelChange();
     
@@ -210,6 +212,12 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     
     
     addAndMakeVisible( &voiceComboBox );
+    voiceComboBox.onChange = [ this ]
+    {
+        DBG("Combo box change " << std::max( voiceComboBox.getSelectedId() - 1, 0 ) ) ;
+        nSlicesNumBox.setValue( audioProcessor.sampleMangler2.getNumSlices( std::max( voiceComboBox.getSelectedId() - 1, 0 ) ) );
+    };
+    
     
     startTimer(500);
     
@@ -236,11 +244,16 @@ void Sjf_Mangler2AudioProcessorEditor::timerCallback()
     
     sjf_setTooltipLabel( this, MAIN_TOOLTIP, tooltipLabel );
     
-    voiceComboBox.clear();
+//    voiceComboBox.clear();
+    auto nItems = voiceComboBox.getNumItems();
+    auto selected = std::max( voiceComboBox.getSelectedId(), 1 ) ;
     for ( int v = 0; v < audioProcessor.sampleMangler2.getNumVoices(); v++ )
     {
-        voiceComboBox.addItem( audioProcessor.sampleMangler2.getFileName( v ), v+1 );
+        juce::String filename = audioProcessor.sampleMangler2.getFileName( v ).isNotEmpty() ? audioProcessor.sampleMangler2.getFileName( v ) : "No sample Chosen";
+        if (v+1 <= nItems) { voiceComboBox.changeItemText( v+1, filename ); }
+        else { voiceComboBox.addItem( filename, v+1 ); }
     }
+    voiceComboBox.setSelectedId( selected );
     
 }
 
@@ -248,9 +261,9 @@ void Sjf_Mangler2AudioProcessorEditor::timerCallback()
 void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    //    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    juce::Rectangle<int> r = { WIDTH, HEIGHT + tooltipLabel.getHeight() };
-    sjf_makeBackground< 40 >( g, r );
+        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+//    juce::Rectangle<int> r = { WIDTH, HEIGHT + tooltipLabel.getHeight() };
+//    sjf_makeBackground< 40 >( g, r );
     
     //    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
     g.setColour (juce::Colours::white);
