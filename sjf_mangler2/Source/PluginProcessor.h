@@ -94,14 +94,16 @@ private:
     
     std::atomic<float>* randOnLoopParameter = nullptr;
     std::atomic<float>* syncToHostParameter = nullptr;
-    std::atomic<float>* phaseRateMultiplierParameter = nullptr;
+//    std::atomic<float>* phaseRateMultiplierParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
     
     std::atomic<float>* playStateParameter = nullptr;
     
     std::atomic<float>* nVoicesParameter = nullptr;
     std::vector< juce::Value > filePathParameter;
-    std::vector< std::atomic<float>* > nSlicesParameter;
+    std::vector< juce::Value > nSlicesParameter;
+    std::vector< juce::Value > phaseRateMultiplierParameter;
+//    std::vector< std::atomic<float>* > nSlicesParameter;
     //    std::atomic<int>*
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_Mangler2AudioProcessor)

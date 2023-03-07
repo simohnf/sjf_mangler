@@ -169,7 +169,12 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     phaseRateMultiplierBox.addItem("*1", 3);
     phaseRateMultiplierBox.addItem("*2", 4);
     phaseRateMultiplierBox.addItem("*4", 5);
-    phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
+//    phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
+    phaseRateMultiplierBox.setSelectedId( 3 );
+    phaseRateMultiplierBox.onChange = [ this ]
+    {
+        audioProcessor.sampleMangler2.setPhaseRateMultiplierIndex( phaseRateMultiplierBox.getSelectedId(), std::max( voiceComboBox.getSelectedId()-1, 0 ) );
+    };
     phaseRateMultiplierBox.setTooltip("This alters the playback speed");
     //    phaseRateMultiplierBox.setLookAndFeel( &otherLookAndFeel );
     
@@ -220,7 +225,9 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     voiceComboBox.onChange = [ this ]
     {
         DBG("Combo box change " << std::max( voiceComboBox.getSelectedId() - 1, 0 ) ) ;
-        nSlicesNumBox.setValue( audioProcessor.sampleMangler2.getNumSlices( std::max( voiceComboBox.getSelectedId() - 1, 0 ) ) );
+        int voiceNumber = std::max( voiceComboBox.getSelectedId() - 1, 0 );
+        nSlicesNumBox.setValue( audioProcessor.sampleMangler2.getNumSlices( voiceNumber ) );
+        phaseRateMultiplierBox.setSelectedId( audioProcessor.sampleMangler2.getPhaseRateMultiplierIndex( voiceNumber ) );
     };
     
     

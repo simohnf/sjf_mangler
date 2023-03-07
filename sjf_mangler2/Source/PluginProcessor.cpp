@@ -39,7 +39,7 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     syncToHostParameter = parameters.getRawParameterValue("syncToHost");
     playStateParameter = parameters.getRawParameterValue("play");
     
-    phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
+//    phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
     
     interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
     
@@ -53,7 +53,8 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     for ( int v = 0; v < *nVoicesParameter; v++ )
     {
         filePathParameter[ v ] = parameters.state.getPropertyAsValue("sampleFilePath" + juce::String( v ), nullptr, true);
-        nSlicesParameter[ v ] = parameters.getRawParameterValue( "numSlices"+juce::String( v ) );
+        nSlicesParameter[ v ] = parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr, true );
+        phaseRateMultiplierParameter[ v ] = parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr, true );
     }
 //    nSlicesParameter = parameters.state.getPropertyAsValue("numSlices", nullptr, true );
     
@@ -218,8 +219,8 @@ void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destDat
     for ( int v = 0; v < *nVoicesParameter; v++ )
     {
         filePathParameter[ v ].setValue( sampleMangler2.getFilePath( v ) );
-//        *nSlicesParameter[ v ] = sampleMangler2.getNumSlices( v );
-//        DBG("Getting state, nSlices " <<  *nSlicesParameter[ v ] << " voice " << v );
+        nSlicesParameter[ v ].setValue( sampleMangler2.getNumSlices( v ) );
+        phaseRateMultiplierParameter[ v ].setValue( sampleMangler2.getPhaseRateMultiplierIndex( v ) );
     }
     
     auto state = parameters.copyState();
@@ -235,18 +236,21 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
         if (xmlState->hasTagName (parameters.state.getType()))
         {
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
-//            m_nVoices = *parameters.getRawParameterValue( "nVoices" );
             setNumVoices( *nVoicesParameter );
             for ( int v = 0; v < *nVoicesParameter; v++ )
             {
-                filePathParameter[ v ].referTo(parameters.state.getPropertyAsValue("sampleFilePath"+juce::String( v ), nullptr) );
-//                nSlicesParameter[ v ]->referTo(parameters.getRawParameterValue( "numSlices"+juce::String( v ) ) );
+                filePathParameter[ v ].referTo( parameters.state.getPropertyAsValue("sampleFilePath"+juce::String( v ), nullptr ) );
                 if (filePathParameter[ v ] != juce::Value{})
                 {
                     sampleMangler2.loadSample( filePathParameter[ v ], v );
                 }
-//                DBG("Setting state, nSlices " << *nSlicesParameter[ v ] << " voice " << v );
-//                sampleMangler2.setNumSlices( *nSlicesParameter[ v ], v );
+                nSlicesParameter[ v ].referTo( parameters.state.getPropertyAsValue("numSlices"+juce::String( v ), nullptr ) );
+                int slices = nSlicesParameter[ v ].getValue();
+                sampleMangler2.setNumSlices( slices, v );
+                phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue("phaseRate"+juce::String( v ), nullptr ) );
+                int phaseRate = phaseRateMultiplierParameter[ v ].getValue();
+                sampleMangler2.setPhaseRateMultiplierIndex( phaseRate , v );
+                
             }
         }
 }
@@ -298,9 +302,9 @@ void Sjf_Mangler2AudioProcessor::checkParameters()
     if (sampleMangler2.m_syncToHostFlag != *syncToHostParameter){
         sampleMangler2.m_syncToHostFlag = *syncToHostParameter;
     }
-    if (sampleMangler2.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
-        sampleMangler2.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
-    }
+//    if (sampleMangler2.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
+//        sampleMangler2.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
+//    }
     if (sampleMangler2.m_canPlayFlag != *playStateParameter){
         sampleMangler2.m_canPlayFlag = *playStateParameter;
     }
@@ -317,7 +321,7 @@ void Sjf_Mangler2AudioProcessor::setNumVoices( const int nVoices )
     sampleMangler2.setNumVoices( nVoices );
     filePathParameter.resize( nVoices );
     nSlicesParameter.resize( nVoices );
-    
+    phaseRateMultiplierParameter.resize( nVoices );
 }
 
 //==============================================================================
@@ -337,7 +341,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_Mangler2AudioProcessor::
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "randomOnLoop", pIDVersionNumber }, "RandomOnLoop", true) );
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "play", pIDVersionNumber }, "Play", false) );
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "syncToHost", pIDVersionNumber }, "SyncToHost", true) );
-    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "phaseRateMultiplier", pIDVersionNumber }, "PhaseRateMultiplier", 1, 5, 3) );
+//    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "phaseRateMultiplier", pIDVersionNumber }, "PhaseRateMultiplier", 1, 5, 3) );
     params.add( std::make_unique<juce::AudioParameterFloat> ( juce::ParameterID{ "fade", pIDVersionNumber }, "Fade", 0.01, 100, 1) );
     params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 2) );
     
