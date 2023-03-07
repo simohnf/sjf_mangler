@@ -13,7 +13,7 @@
 #define indent 10
 
 #define WIDTH potSize*5+indent*2
-#define HEIGHT potSize*3+textHeight*2
+#define HEIGHT potSize*3+textHeight*3
 //==============================================================================
 Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2AudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
 : AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
@@ -82,7 +82,12 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     //    stepShuffleProbLabel.setTooltip("This sets the likelyhood of a different slice being played at any given step --> e.g. instead of playing the first slice being played on the first step the  2nd/3rd/last/etc. slice might be played instead");
     
     
-    
+    addAndMakeVisible( &sampleChoiceSlider );
+    sampleChoiceSliderAttachment.reset(new SliderAttachment (valueTreeState, "sampleChoiceProb", sampleChoiceSlider));
+    sampleChoiceSlider.setSliderStyle( juce::Slider::LinearBar );
+    sampleChoiceSlider.setTextValueSuffix ("%");
+    sampleChoiceSlider.setTooltip("This sets the likelyhood of a choosing the second sample");
+    sampleChoiceSlider.sendLookAndFeelChange();
     
     addAndMakeVisible (loadButton);
     loadButton.setButtonText ("load\naudio\nsample");
@@ -275,6 +280,7 @@ void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText("speed", 0, speedProbSlider.getY(), speedProbSlider.getX(), textHeight, juce::Justification::right, 1 );
     g.drawFittedText("amplitude", 0, ampProbSlider.getY(), ampProbSlider.getX(), textHeight, juce::Justification::right, 1 );
     g.drawFittedText("shuffle", 0, stepShuffleProbSlider.getY(), stepShuffleProbSlider.getX(), textHeight, juce::Justification::right, 1 );
+    g.drawFittedText("sample", 0, sampleChoiceSlider.getY(), sampleChoiceSlider.getX(), textHeight, juce::Justification::right, 1 );
     
     g.drawFittedText("nSteps", 0, nStepsNumBox.getY(), nStepsNumBox.getX(), textHeight, juce::Justification::right, 1 );
     g.drawFittedText("nSlices", 0, nSlicesNumBox.getY(), nSlicesNumBox.getX(), textHeight, juce::Justification::right, 1 );
@@ -298,9 +304,9 @@ void Sjf_Mangler2AudioProcessorEditor::resized()
     subDivProbSlider.setBounds(speedProbSlider.getX(), speedProbSlider.getBottom(), slideLength, textHeight);
     ampProbSlider.setBounds(subDivProbSlider.getX(), subDivProbSlider.getBottom(), slideLength, textHeight);
     stepShuffleProbSlider.setBounds(ampProbSlider.getX(), ampProbSlider.getBottom(), slideLength, textHeight);
+    sampleChoiceSlider.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom(), slideLength, textHeight);
     
-    
-    randomAllButton.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom() + textHeight, potSize, textHeight*2);
+    randomAllButton.setBounds(sampleChoiceSlider.getX(), sampleChoiceSlider.getBottom() + textHeight, potSize, textHeight*2);
     randomOnLoopButton.setBounds(randomAllButton.getRight() + indent, randomAllButton.getBounds().getY(), potSize*3 - indent, textHeight*2);
     
     nSlicesNumBox.setBounds(randomAllButton.getX(), randomOnLoopButton.getBottom(), potSize, textHeight);
