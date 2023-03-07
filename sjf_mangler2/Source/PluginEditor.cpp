@@ -170,7 +170,7 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     phaseRateMultiplierBox.addItem("*2", 4);
     phaseRateMultiplierBox.addItem("*4", 5);
 //    phaseRateMultiplierAttachment.reset(new ComboBoxAttachment(valueTreeState, "phaseRateMultiplier", phaseRateMultiplierBox ));
-    phaseRateMultiplierBox.setSelectedId( 3 );
+//    phaseRateMultiplierBox.setSelectedId( 3 );
     phaseRateMultiplierBox.onChange = [ this ]
     {
         audioProcessor.sampleMangler2.setPhaseRateMultiplierIndex( phaseRateMultiplierBox.getSelectedId(), std::max( voiceComboBox.getSelectedId()-1, 0 ) );

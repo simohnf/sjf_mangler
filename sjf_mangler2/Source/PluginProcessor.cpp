@@ -59,7 +59,32 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
 //    nSlicesParameter = parameters.state.getPropertyAsValue("numSlices", nullptr, true );
     
     sampleMangler2.initialise( getSampleRate() );
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    ////////////////////////////////////////
     DBG("Ended construction");
+    if( !juce::File( "~/Library/Audio/Plug-Ins/sjf" ).exists() )
+    { juce::File( "~/Library/Audio/Plug-Ins/sjf" ).createDirectory(); }
+    auto storage = juce::File( "~/Library/Audio/Plug-Ins/sjf" ).getChildFile("mangler2_fileInfo.txt");
+//    storage.create();
+//    juce::File storage( juce::String(juce::File::getSpecialLocation( juce::File::SpecialLocationType::currentApplicationFile )));
+    DBG("FILENAME " << storage.getFileName());
+    // create an outer node called "ANIMALS"
+    juce::XmlElement animalsList ("ANIMALS");
+
+    // create an inner element..
+    juce::XmlElement* giraffe = new juce::XmlElement ("GIRAFFE");
+    
+    giraffe->setAttribute ("name", "nigel");
+    giraffe->setAttribute ("age", 10);
+    giraffe->setAttribute ("friendly", true);
+    
+    // ..and add our new element to the parent node
+    animalsList.addChildElement (giraffe);
+    animalsList.writeTo( storage );
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    ////////////////////////////////////////
 }
 
 Sjf_Mangler2AudioProcessor::~Sjf_Mangler2AudioProcessor()
@@ -226,6 +251,24 @@ void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destDat
     auto state = parameters.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
+    
+    
+    
+    
+    auto storage = juce::File( "~/Library/Audio/Plug-Ins/sjf" ).getChildFile("mangler2_fileInfo.txt");
+    juce::XmlElement sampleList ("SAMPLES");
+    // create an inner element..
+    for ( int v = 0; v < *nVoicesParameter; v++ )
+    {
+        if( sampleMangler2.getFilePath( v ) != juce::String{} )
+        {
+            juce::XmlElement* sample = new juce::XmlElement ( sampleMangler2.getFilePath( v ) );
+            sample->setAttribute ("nSlices", sampleMangler2.getNumSlices( v ) );
+            // ..and add our new element to the parent node
+            sampleList.addChildElement (sample);
+        }
+    }
+    sampleList.writeTo( storage );
 }
 //==============================================================================
 void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
