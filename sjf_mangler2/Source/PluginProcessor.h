@@ -31,7 +31,7 @@ public:
     ~Sjf_Mangler2AudioProcessor() override;
     
     
-    void loadButtonClicked ( const int voiceNumber ) { sampleMangler2.loadSample( voiceNumber ) ; };
+    void loadButtonClicked ( const int voiceNumber );// { sampleMangler2.loadSample( voiceNumber ) ; };
     void playButtonClicked (bool playFlag) { sampleMangler2.m_canPlayFlag = playFlag; };
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -69,6 +69,8 @@ public:
     
     void setNumVoices( const int nVoices );
     
+    void writeSampleInfoToXML();
+    void readSampleInfoFromXML( const int voiceNumber );
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
 public:

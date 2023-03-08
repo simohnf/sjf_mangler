@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#define sampleInfoFile "~/Library/Audio/Plug-Ins/sjf/mangler2_fileInfo.xml"
 
 //==============================================================================
 Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
@@ -64,24 +65,33 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     ////////////////////////////////////////
     DBG("Ended construction");
     if( !juce::File( "~/Library/Audio/Plug-Ins/sjf" ).exists() )
-    { juce::File( "~/Library/Audio/Plug-Ins/sjf" ).createDirectory(); }
-    auto storage = juce::File( "~/Library/Audio/Plug-Ins/sjf" ).getChildFile("mangler2_fileInfo.txt");
+    {
+        juce::File( "~/Library/Audio/Plug-Ins/sjf" ).createDirectory();
+    }
+    if ( !juce::File( sampleInfoFile ).existsAsFile() )
+    {
+        juce::File( sampleInfoFile ).create();
+        auto storage = juce::File( sampleInfoFile );
+        juce::XmlElement sampleList ("SAMPLES");
+        sampleList.writeTo( storage );
+    }
+//    auto storage = juce::File( "~/Library/Audio/Plug-Ins/sjf" ).getChildFile("mangler2_fileInfo.txt");
 //    storage.create();
 //    juce::File storage( juce::String(juce::File::getSpecialLocation( juce::File::SpecialLocationType::currentApplicationFile )));
-    DBG("FILENAME " << storage.getFileName());
-    // create an outer node called "ANIMALS"
-    juce::XmlElement animalsList ("ANIMALS");
-
-    // create an inner element..
-    juce::XmlElement* giraffe = new juce::XmlElement ("GIRAFFE");
-    
-    giraffe->setAttribute ("name", "nigel");
-    giraffe->setAttribute ("age", 10);
-    giraffe->setAttribute ("friendly", true);
-    
-    // ..and add our new element to the parent node
-    animalsList.addChildElement (giraffe);
-    animalsList.writeTo( storage );
+//    DBG("FILENAME " << storage.getFileName());
+//    // create an outer node called "ANIMALS"
+//    juce::XmlElement animalsList ("ANIMALS");
+//
+//    // create an inner element..
+//    juce::XmlElement* giraffe = new juce::XmlElement ("GIRAFFE");
+//
+//    giraffe->setAttribute ("name", "nigel");
+//    giraffe->setAttribute ("age", 10);
+//    giraffe->setAttribute ("friendly", true);
+//
+//    // ..and add our new element to the parent node
+//    animalsList.addChildElement (giraffe);
+//    animalsList.writeTo( storage );
     ////////////////////////////////////////
     ////////////////////////////////////////
     ////////////////////////////////////////
@@ -253,22 +263,70 @@ void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destDat
     copyXmlToBinary (*xml, destData);
     
     
-    
-    
-    auto storage = juce::File( "~/Library/Audio/Plug-Ins/sjf" ).getChildFile("mangler2_fileInfo.txt");
-    juce::XmlElement sampleList ("SAMPLES");
-    // create an inner element..
-    for ( int v = 0; v < *nVoicesParameter; v++ )
+    writeSampleInfoToXML();
+}
+//==============================================================================
+void Sjf_Mangler2AudioProcessor::writeSampleInfoToXML()
+{
+    auto storage = juce::File( sampleInfoFile );
+    juce::XmlDocument mainDoc ( storage );
+    if ( auto mainElement = mainDoc.getDocumentElement() )
     {
-        if( sampleMangler2.getFilePath( v ) != juce::String{} )
+        if( mainElement->getTagName() == "SAMPLES" )
         {
-            juce::XmlElement* sample = new juce::XmlElement ( sampleMangler2.getFilePath( v ) );
-            sample->setAttribute ("nSlices", sampleMangler2.getNumSlices( v ) );
-            // ..and add our new element to the parent node
-            sampleList.addChildElement (sample);
+            DBG( "MAIN ELEMENT: "<< mainElement->getNumChildElements() << " CHILDREN" );
+            for( int i = 0; i < mainElement->getNumChildElements(); i++ )
+            {
+                DBG("MAIN ELEMENT: CHILD " << i << " " << mainElement->getChildElement( i )->getTagName() );
+            }
+            
+            DBG("SAMPLES EXISTS --> DO SOMETHING");
+            for ( int v = 0; v < *nVoicesParameter; v++ )
+            {
+                if( sampleMangler2.getFilePath( v ).isNotEmpty() )
+                {
+                    auto samplesElement = mainElement->getChildByAttribute( "path", sampleMangler2.getFilePath( v ) );
+                    if ( samplesElement != nullptr )
+                    {
+                        //                        auto samplesElement = mainElement->getChildByName( sampleMangler2.getFilePath( v ) );
+                        DBG( "ELEMENT EXISTS");
+                        samplesElement->setAttribute ("nSlices", sampleMangler2.getNumSlices( v ) );
+                    }
+                    else
+                    {
+                        DBG( "ELEMENT DOESN'T EXIST" );
+                        juce::XmlElement* sample = new juce::XmlElement ( "sample"+juce::String( mainElement->getNumChildElements() ) );
+                        sample->setAttribute ("path", sampleMangler2.getFilePath( v ) );
+                        sample->setAttribute ("nSlices", sampleMangler2.getNumSlices( v ) );
+                        // ..and add our new element to the parent node
+                        mainElement->addChildElement (sample);
+                    }
+                }
+            }
+            mainElement->writeTo( storage );
+        }
+        else
+        {
+            DBG("SAMPLES DOESNT EXIST");
         }
     }
-    sampleList.writeTo( storage );
+    else
+    {
+        DBG("CREATING SAMPLES");
+        //        juce::XmlElement sampleList ("SAMPLES");
+        //        // create an inner element..
+        //        for ( int v = 0; v < *nVoicesParameter; v++ )
+        //        {
+        //            if( sampleMangler2.getFilePath( v ) != juce::String{} )
+        //            {
+        //                juce::XmlElement* sample = new juce::XmlElement ( sampleMangler2.getFilePath( v ) );
+        //                sample->setAttribute ("nSlices", sampleMangler2.getNumSlices( v ) );
+        //                // ..and add our new element to the parent node
+        //                sampleList.addChildElement (sample);
+        //            }
+        //        }
+        //        sampleList.writeTo( storage );
+    }
 }
 //==============================================================================
 void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -285,7 +343,11 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
                 filePathParameter[ v ].referTo( parameters.state.getPropertyAsValue("sampleFilePath"+juce::String( v ), nullptr ) );
                 if (filePathParameter[ v ] != juce::Value{})
                 {
-                    sampleMangler2.loadSample( filePathParameter[ v ], v );
+                    if ( sampleMangler2.loadSample( filePathParameter[ v ], v ) )
+                    {
+                        readSampleInfoFromXML( v );
+                    }
+//                    sampleMangler2.loadSample( filePathParameter[ v ], v );
                 }
                 nSlicesParameter[ v ].referTo( parameters.state.getPropertyAsValue("numSlices"+juce::String( v ), nullptr ) );
                 int slices = nSlicesParameter[ v ].getValue();
@@ -293,12 +355,48 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
                 phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue("phaseRate"+juce::String( v ), nullptr ) );
                 int phaseRate = phaseRateMultiplierParameter[ v ].getValue();
                 sampleMangler2.setPhaseRateMultiplierIndex( phaseRate , v );
-                
             }
         }
 }
 //==============================================================================
-
+void Sjf_Mangler2AudioProcessor::readSampleInfoFromXML( const int voiceNumber )
+{
+    auto storage = juce::File( sampleInfoFile );
+    juce::XmlDocument mainDoc ( storage );
+    if ( auto mainElement = mainDoc.getDocumentElement() )
+    {
+        if( mainElement->getTagName() == "SAMPLES" )
+        {
+            DBG( "MAIN ELEMENT: "<< mainElement->getNumChildElements() << " CHILDREN" );
+            for( int i = 0; i < mainElement->getNumChildElements(); i++ )
+            {
+                DBG("MAIN ELEMENT: CHILD " << i << " " << mainElement->getChildElement( i )->getTagName() );
+            }
+            
+            DBG("SAMPLES EXISTS --> DO SOMETHING");
+            if( sampleMangler2.getFilePath( voiceNumber ).isNotEmpty() )
+            {
+                auto samplesElement = mainElement->getChildByAttribute( "path", sampleMangler2.getFilePath( voiceNumber ) );
+                if ( samplesElement != nullptr )
+                {
+                    //                        auto samplesElement = mainElement->getChildByName( sampleMangler2.getFilePath( v ) );
+                    DBG( "ELEMENT EXISTS");
+                    sampleMangler2.setNumSlices( samplesElement->getIntAttribute ("nSlices"), voiceNumber );
+                }
+                else { DBG( "ELEMENT DOESN'T EXIST" ); }
+            }
+        }
+    }
+}
+//==============================================================================
+void Sjf_Mangler2AudioProcessor::loadButtonClicked ( const int voiceNumber )
+{
+    if ( sampleMangler2.loadSample( voiceNumber ) )
+    {
+        readSampleInfoFromXML( voiceNumber );
+    }
+}
+//==============================================================================
 void Sjf_Mangler2AudioProcessor::checkParameters()
 {
     if (sampleMangler2.m_revProb != *revParameter){

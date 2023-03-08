@@ -13,7 +13,7 @@
 #define indent 10
 
 #define WIDTH potSize*5+indent*2
-#define HEIGHT potSize*3+textHeight*3
+#define HEIGHT potSize*3+textHeight*3 + indent
 //==============================================================================
 Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2AudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
 : AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
@@ -90,7 +90,7 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     sampleChoiceSlider.sendLookAndFeelChange();
     
     addAndMakeVisible (loadButton);
-    loadButton.setButtonText ("load\naudio\nsample");
+    loadButton.setButtonText ("load sample");
     loadButton.onClick = [this]
     {
         int currentVoice = voiceComboBox.getSelectedId() > 0 ? voiceComboBox.getSelectedId()-1 : 0 ;
@@ -138,9 +138,10 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     nSlicesNumBox.onValueChange = [this]
     {
         
-        int currentVoice = std::max( voiceComboBox.getSelectedId(), 1 );
-        audioProcessor.sampleMangler2.setNumSlices( nSlicesNumBox.getValue(), currentVoice - 1 );
-        DBG("SLIDER CHANGED " << currentVoice - 1 );
+        int currentVoice = std::max( voiceComboBox.getSelectedId() -1, 0 );
+        audioProcessor.sampleMangler2.setNumSlices( nSlicesNumBox.getValue(), currentVoice );
+        audioProcessor.writeSampleInfoToXML();
+        DBG("SLIDER CHANGED " << currentVoice );
     };
 
     nSlicesNumBox.setTooltip("This determines the number of divisions the audio sample is cut up into. More slices means more divisions, therefore shorter variations. Fewer slices means longer divisions and therefore longer variations");
@@ -231,6 +232,17 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     };
     
     
+    addAndMakeVisible( &readSampleInfoButton );
+    readSampleInfoButton.setButtonText( "Sample Info" );
+    readSampleInfoButton.setTooltip( "If you have loaded a sample in a previous session you can use this to load automatically load the last number of slices you set for this file" );
+    readSampleInfoButton.onClick = [ this ]
+    {
+        int voiceNumber = std::max( voiceComboBox.getSelectedId() - 1, 0 );
+        audioProcessor.readSampleInfoFromXML( voiceNumber );
+        nSlicesNumBox.setValue( audioProcessor.sampleMangler2.getNumSlices( voiceNumber ) );
+    };
+    
+    
     startTimer(500);
     
     
@@ -280,7 +292,7 @@ void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
     //    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText("sjf_Mangler2", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
+    g.drawFittedText("sjf_mangler v2.0", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
     
     g.drawFittedText("reverse", 0, revProbSlider.getY(), revProbSlider.getX(), textHeight, juce::Justification::right, 1 );
     g.drawFittedText("repeat", 0, subDivProbSlider.getY(), subDivProbSlider.getX(), textHeight, juce::Justification::right, 1 );
@@ -290,9 +302,17 @@ void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText("sample", 0, sampleChoiceSlider.getY(), sampleChoiceSlider.getX(), textHeight, juce::Justification::right, 1 );
     
     g.drawFittedText("nSteps", 0, nStepsNumBox.getY(), nStepsNumBox.getX(), textHeight, juce::Justification::right, 1 );
-    g.drawFittedText("nSlices", 0, nSlicesNumBox.getY(), nSlicesNumBox.getX(), textHeight, juce::Justification::right, 1 );
     g.drawFittedText("fade", 0, fadeLenNumBox.getY(), fadeLenNumBox.getX(), textHeight, juce::Justification::right, 1 );
+//    g.drawFittedText("interpolation", 0, interpolationTypeBox.getY(), interpolationTypeBox.getX(), textHeight, juce::Justification::right, 1 );
     
+    g.drawFittedText("nSlices", 0, nSlicesNumBox.getY(), nSlicesNumBox.getX(), textHeight, juce::Justification::right, 1 );
+    
+    g.setColour( otherLookAndFeel.outlineColour );
+    g.drawLine( voiceComboBox.getX(), voiceComboBox.getBottom(), voiceComboBox.getX(), nSlicesNumBox.getBottom() );
+    g.drawLine( voiceComboBox.getX(), nSlicesNumBox.getBottom(), nSlicesNumBox.getX(), nSlicesNumBox.getBottom() );
+    
+    g.setColour( otherLookAndFeel.backGroundColour.withAlpha( 0.7f ) );
+    g.fillRect( voiceComboBox.getX(), voiceComboBox.getY(), voiceComboBox.getWidth() + loadButton.getWidth(), textHeight*2 );
     //    g.drawFittedText(audioProcessor.sampleMangler2.getFileName(), indent, interpolationTypeBox.getBottom(), getWidth(), textHeight, juce::Justification::centred, 1 );
     
 }
@@ -313,22 +333,24 @@ void Sjf_Mangler2AudioProcessorEditor::resized()
     stepShuffleProbSlider.setBounds(ampProbSlider.getX(), ampProbSlider.getBottom(), slideLength, textHeight);
     sampleChoiceSlider.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom(), slideLength, textHeight);
     
-    randomAllButton.setBounds(sampleChoiceSlider.getX(), sampleChoiceSlider.getBottom() + textHeight, potSize, textHeight*2);
+    randomAllButton.setBounds(sampleChoiceSlider.getX(), sampleChoiceSlider.getBottom() + indent, potSize, textHeight*2);
     randomOnLoopButton.setBounds(randomAllButton.getRight() + indent, randomAllButton.getBounds().getY(), potSize*3 - indent, textHeight*2);
     
-    nSlicesNumBox.setBounds(randomAllButton.getX(), randomOnLoopButton.getBottom(), potSize, textHeight);
-    nStepsNumBox.setBounds(nSlicesNumBox.getX(), nSlicesNumBox.getBottom(), potSize, textHeight);
+    
+    nStepsNumBox.setBounds(randomAllButton.getX(), randomAllButton.getBottom(), potSize, textHeight);
     fadeLenNumBox.setBounds(nStepsNumBox.getX(), nStepsNumBox.getBottom(), potSize, textHeight);
     interpolationTypeBox.setBounds(fadeLenNumBox.getX(), fadeLenNumBox.getBottom(), potSize, textHeight);
     
-    playButton.setBounds(randomOnLoopButton.getX(), nSlicesNumBox.getY(), randomOnLoopButton.getWidth()/3, potSize);
-    hostSyncButton.setBounds(playButton.getRight(), playButton.getY(), playButton.getWidth(), 3*potSize/4);
-    phaseRateMultiplierBox.setBounds(hostSyncButton.getX(), hostSyncButton.getBottom(), hostSyncButton.getWidth(), textHeight);
-    loadButton.setBounds(hostSyncButton.getRight(), hostSyncButton.getY(), playButton.getWidth(), hostSyncButton.getHeight());
-    tooltipsToggle.setBounds( loadButton.getX(), loadButton.getBottom(), playButton.getWidth(), textHeight );
+    playButton.setBounds( randomOnLoopButton.getX(), randomOnLoopButton.getBottom(), randomOnLoopButton.getWidth()/2.0f, textHeight*3);
+    hostSyncButton.setBounds( playButton.getRight(), playButton.getY(), playButton.getWidth(), playButton.getHeight() );
     
-    voiceComboBox.setBounds( indent, interpolationTypeBox.getBottom(), getWidth() - indent*2, textHeight );
+    voiceComboBox.setBounds( indent, interpolationTypeBox.getBottom() + indent, hostSyncButton.getRight() - indent - 2*potSize, textHeight );
+    loadButton.setBounds( voiceComboBox.getRight(), voiceComboBox.getY(), potSize*2, textHeight );
+    nSlicesNumBox.setBounds(randomAllButton.getX(), voiceComboBox.getBottom(), potSize, textHeight);
+    phaseRateMultiplierBox.setBounds( nSlicesNumBox.getRight(), nSlicesNumBox.getY(), nSlicesNumBox.getWidth(), textHeight );
+    readSampleInfoButton.setBounds( phaseRateMultiplierBox.getRight(), phaseRateMultiplierBox.getY(), phaseRateMultiplierBox.getWidth(), textHeight );
     
+    tooltipsToggle.setBounds( readSampleInfoButton.getRight(), readSampleInfoButton.getY(), phaseRateMultiplierBox.getWidth(), textHeight );
     //    sampleNameLabel.setBounds( indent, interpolationTypeBox.getBottom(), getWidth(), textHeight);
     tooltipLabel.setBounds( 0, HEIGHT, getWidth(), textHeight*6);
 }
