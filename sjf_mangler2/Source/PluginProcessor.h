@@ -76,7 +76,7 @@ public:
     
 public:
     sjf_samplerPoly sampleMangler2;
-    int m_nVoices = 2;
+//    int m_nVoices = 2;
     
 private:
     juce::AudioFormatManager m_formatManager;
@@ -105,7 +105,8 @@ private:
     
     std::atomic<float>* playStateParameter = nullptr;
     
-    std::atomic<float>* nVoicesParameter = nullptr;
+//    std::atomic<float>* nVoicesParameter = nullptr;
+    juce::Value nVoicesParameter;
     std::vector< juce::Value > filePathParameter;
     std::vector< juce::Value > nSlicesParameter;
     std::vector< juce::Value > sampleChoiceProbabilitiesParameter;

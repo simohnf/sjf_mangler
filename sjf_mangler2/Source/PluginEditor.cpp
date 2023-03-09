@@ -140,11 +140,11 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
         
         int currentVoice = std::max( voiceComboBox.getSelectedId() -1, 0 );
         audioProcessor.sampleMangler2.setNumSlices( nSlicesNumBox.getValue(), currentVoice );
-        audioProcessor.writeSampleInfoToXML();
+//        audioProcessor.writeSampleInfoToXML();
         DBG("SLIDER CHANGED " << currentVoice );
     };
 
-    nSlicesNumBox.setTooltip("This determines the number of divisions the audio sample is cut up into. More slices means more divisions, therefore shorter variations. Fewer slices means longer divisions and therefore longer variations.\nOnce you change this it will be stored and can be recalled in future sessions");
+    nSlicesNumBox.setTooltip("This determines the number of divisions the audio sample is cut up into. More slices means more divisions, therefore shorter variations. Fewer slices means longer divisions and therefore longer variations."/*\nOnce you change this it will be stored and can be recalled in future sessions"*/);
     nSlicesNumBox.sendLookAndFeelChange();
     
     addAndMakeVisible (nStepsNumBox);
@@ -238,7 +238,10 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     readSampleInfoButton.onClick = [ this ]
     {
         int voiceNumber = std::max( voiceComboBox.getSelectedId() - 1, 0 );
-        audioProcessor.readSampleInfoFromXML( voiceNumber );
+        for ( int v = 0; v < audioProcessor.sampleMangler2.getNumVoices(); v++ )
+        {
+            audioProcessor.readSampleInfoFromXML( v );
+        }
         nSlicesNumBox.setValue( audioProcessor.sampleMangler2.getNumSlices( voiceNumber ) );
     };
     
@@ -248,7 +251,7 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
     sampleProbMultiSlider.setNumSliders( nManglerVoices );
     for ( int v = 0; v < nManglerVoices; v++ )
     {
-        sampleProbMultiSlider.setSliderValue( v, audioProcessor.sampleMangler2.getSampleChoiceProbability( v ) );
+        sampleProbMultiSlider.setSliderValue( v, audioProcessor.sampleMangler2.getSampleChoiceProbability( v ) ); 
     }
     
     addAndMakeVisible( &loadFolderButton );

@@ -26,6 +26,16 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
 , parameters(*this, nullptr, juce::Identifier("sjf_Mangler2"), createParameterLayout() )//, m_nVoices( 2 )
 {
     DBG("Started construction");
+    nVoicesParameter = parameters.state.getPropertyAsValue( "nVoices", nullptr, true );
+    if ( (int)nVoicesParameter.getValue() < 1 )
+    {
+        nVoicesParameter.setValue( 1 );
+    }
+    DBG("Starting with " << (int)nVoicesParameter.getValue() << " Voices");
+    //    *nVoicesParameter = m_nVoices;
+    DBG("setting num voices in mangler");
+    setNumVoices( nVoicesParameter.getValue() );
+    
     revParameter = parameters.getRawParameterValue("revProb");
     speedParameter = parameters.getRawParameterValue("speedProb");
     divParameter = parameters.getRawParameterValue("divProb");
@@ -45,13 +55,9 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
     
     
-    nVoicesParameter = parameters.getRawParameterValue( "nVoices" );
-    DBG("Starting with nVoices");
-//    *nVoicesParameter = m_nVoices;
-    DBG("setting num voices in mangler");
-    setNumVoices( *nVoicesParameter );
+
     
-    for ( int v = 0; v < *nVoicesParameter; v++ )
+    for ( int v = 0; v < (int)nVoicesParameter.getValue(); v++ )
     {
         filePathParameter[ v ] = parameters.state.getPropertyAsValue("sampleFilePath" + juce::String( v ), nullptr, true);
         nSlicesParameter[ v ] = parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr, true );
@@ -61,6 +67,7 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
 //    nSlicesParameter = parameters.state.getPropertyAsValue("numSlices", nullptr, true );
     
     sampleMangler2.initialise( getSampleRate() );
+    sampleMangler2.setNumSteps( *nStepsParameter );
     ////////////////////////////////////////
     ////////////////////////////////////////
     ////////////////////////////////////////
@@ -251,8 +258,10 @@ juce::AudioProcessorEditor* Sjf_Mangler2AudioProcessor::createEditor()
 //==============================================================================
 void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    setNumVoices( *nVoicesParameter );
-    for ( int v = 0; v < *nVoicesParameter; v++ )
+    DBG( "nVoicesParameter " << (int)nVoicesParameter.getValue() );
+    setNumVoices( (int)nVoicesParameter.getValue() );
+    DBG( "nVoicesParameter " << (int)nVoicesParameter.getValue() );
+    for ( int v = 0; v < (int)nVoicesParameter.getValue(); v++ )
     {
         filePathParameter[ v ].setValue( sampleMangler2.getFilePath( v ) );
         nSlicesParameter[ v ].setValue( sampleMangler2.getNumSlices( v ) );
@@ -283,7 +292,7 @@ void Sjf_Mangler2AudioProcessor::writeSampleInfoToXML()
             }
             
             DBG("SAMPLES EXISTS --> DO SOMETHING");
-            for ( int v = 0; v < *nVoicesParameter; v++ )
+            for ( int v = 0; v < (int)nVoicesParameter.getValue(); v++ )
             {
                 if( sampleMangler2.getFilePath( v ).isNotEmpty() )
                 {
@@ -334,21 +343,33 @@ void Sjf_Mangler2AudioProcessor::writeSampleInfoToXML()
 void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
 {
     
-//    m_chooser = std::make_unique<juce::FileChooser> ("Select a folder of Wave/Aiff files to load..." ,
-//                                                     juce::File{}, "*.aif, *.wav");
+//    juce::FileChooser::browseForDirectory();
+    m_chooser = std::make_unique<juce::FileChooser> ("Select a folder of Wave/Aiff files to load..." ,
+                                                     juce::File{}, "*.aif, *.wav");
 //    m_chooser->browseForDirectory();
-//    auto chooserFlags = juce::FileBrowserComponent::openMode
-//    | juce::FileBrowserComponent::canSelectFiles;
-//
-//    m_chooser->launchAsync (chooserFlags, [ this ] (const juce::FileChooser& fc)
-//                            {
-//                                auto file = fc.getResult();
-//                                if (file == juce::File{}) { return; }
-//                                std::unique_ptr<juce::AudioFormatReader> reader (m_formatManager.createReaderFor (file));
-//                                if (reader.get() != nullptr)
-//                                {
-//                                }
-//                            });
+    auto chooserFlags = juce::FileBrowserComponent::openMode
+    | juce::FileBrowserComponent::canSelectDirectories;
+
+    m_chooser->launchAsync (chooserFlags, [ this ] (const juce::FileChooser& fc)
+                            {
+                                auto file = fc.getResult();
+                                if (file == juce::File{}) { return; }
+                                
+                                auto nFiles = file.getNumberOfChildFiles( juce::File::findFiles, "*.aif, *.wav" );
+                                if ( nFiles > 0 )
+                                {
+                                    setNumVoices( nFiles );
+                                    DBG( "Directory Name " << file.getFileName() << " " <<  nFiles << " audio files" );
+                                    auto samples = file.findChildFiles( juce::File::findFiles, true, "*.aif, *.wav", juce::File::FollowSymlinks::no );
+                                    for ( int s = 0; s < nFiles; s++ )
+                                    {
+                                        DBG( samples[ s ].getFileName() );
+                                        juce::Value path;
+                                        path.setValue( samples[ s ].getFullPathName() );
+                                        sampleMangler2.loadSample( path, s );
+                                    }
+                                }
+                            });
     
 }
 //==============================================================================
@@ -360,8 +381,9 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
         if (xmlState->hasTagName (parameters.state.getType()))
         {
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
-            setNumVoices( *nVoicesParameter );
-            for ( int v = 0; v < *nVoicesParameter; v++ )
+            nVoicesParameter.referTo( parameters.state.getPropertyAsValue( "nVoices", nullptr ) );
+            setNumVoices( (int)nVoicesParameter.getValue() );
+            for ( int v = 0; v < (int)nVoicesParameter.getValue(); v++ )
             {
                 filePathParameter[ v ].referTo( parameters.state.getPropertyAsValue("sampleFilePath"+juce::String( v ), nullptr ) );
                 if (filePathParameter[ v ] != juce::Value{})
@@ -482,7 +504,8 @@ void Sjf_Mangler2AudioProcessor::checkParameters()
 
 void Sjf_Mangler2AudioProcessor::setNumVoices( const int nVoices )
 {
-    *nVoicesParameter = nVoices;
+//    *nVoicesParameter = nVoices;
+    nVoicesParameter.setValue( nVoices );
 //    nVoicesParameter->setValue( nVoices );
     sampleMangler2.setNumVoices( nVoices );
     filePathParameter.resize( nVoices );
@@ -512,7 +535,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_Mangler2AudioProcessor::
     params.add( std::make_unique<juce::AudioParameterFloat> ( juce::ParameterID{ "fade", pIDVersionNumber }, "Fade", 0.01, 100, 1) );
     params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 2) );
     
-    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "nVoices", pIDVersionNumber }, "NVoices", 1, 32, 2) );
+//    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "nVoices", pIDVersionNumber }, "NVoices", 1, 32, 2) );
     
     return params;
 }
