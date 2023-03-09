@@ -71,6 +71,7 @@ public:
     
     void writeSampleInfoToXML();
     void readSampleInfoFromXML( const int voiceNumber );
+    void loadFolderOfSamples ();
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
 public:
@@ -78,6 +79,9 @@ public:
     int m_nVoices = 2;
     
 private:
+    juce::AudioFormatManager m_formatManager;
+    std::unique_ptr<juce::FileChooser> m_chooser;
+    
     juce::AudioPlayHead* playHead;
     juce::AudioPlayHead::PositionInfo positionInfo;
     
@@ -104,6 +108,7 @@ private:
     std::atomic<float>* nVoicesParameter = nullptr;
     std::vector< juce::Value > filePathParameter;
     std::vector< juce::Value > nSlicesParameter;
+    std::vector< juce::Value > sampleChoiceProbabilitiesParameter;
     std::vector< juce::Value > phaseRateMultiplierParameter;
 //    std::vector< std::atomic<float>* > nSlicesParameter;
     //    std::atomic<int>*

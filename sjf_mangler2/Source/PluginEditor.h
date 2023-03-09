@@ -12,6 +12,7 @@
 #include "PluginProcessor.h"
 #include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_numBox.h"
 #include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_lookAndFeel.h"
+#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_multislider.h"
 
 //==============================================================================
 /**
@@ -46,7 +47,7 @@ private:
     void timerCallback() override;
     
     
-    juce::TextButton loadButton, randomAllButton, readSampleInfoButton;
+    juce::TextButton loadButton, randomAllButton, readSampleInfoButton, loadFolderButton;
     juce::ToggleButton randomOnLoopButton, hostSyncButton, playButton, tooltipsToggle;
     juce::Slider revProbSlider, speedProbSlider, subDivProbSlider, ampProbSlider, stepShuffleProbSlider, sampleChoiceSlider;
     juce::Label /*revProbLabel, speedProbLabel, subDivProbLabel, ampProbLabel, stepShuffleProbLabel, nSlicesLabel, nStepsLabel, fadeLenLabel, sampleNameLabel,*/ tooltipLabel;
@@ -55,6 +56,7 @@ private:
     
     
     sjf_numBox fadeLenNumBox, nSlicesNumBox, nStepsNumBox;
+    sjf_multislider sampleProbMultiSlider;
     
     std::unique_ptr<SliderAttachment> revProbAttachment, subDivProbAttachment, speedProbAttachment, ampProbAttachment, shuffleProbAttachment, nSlicesAttachment, nStepsAttachment, fadeLenAttachment, sampleChoiceSliderAttachment;
     

@@ -56,6 +56,7 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
         filePathParameter[ v ] = parameters.state.getPropertyAsValue("sampleFilePath" + juce::String( v ), nullptr, true);
         nSlicesParameter[ v ] = parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr, true );
         phaseRateMultiplierParameter[ v ] = parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr, true );
+        sampleChoiceProbabilitiesParameter[ v ] = parameters.state.getPropertyAsValue("sampleChoiceProb"+juce::String( v ), nullptr, true );
     }
 //    nSlicesParameter = parameters.state.getPropertyAsValue("numSlices", nullptr, true );
     
@@ -256,6 +257,7 @@ void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destDat
         filePathParameter[ v ].setValue( sampleMangler2.getFilePath( v ) );
         nSlicesParameter[ v ].setValue( sampleMangler2.getNumSlices( v ) );
         phaseRateMultiplierParameter[ v ].setValue( sampleMangler2.getPhaseRateMultiplierIndex( v ) );
+        sampleChoiceProbabilitiesParameter[ v ].setValue( sampleMangler2.getSampleChoiceProbability( v ) );
     }
     
     auto state = parameters.copyState();
@@ -329,6 +331,27 @@ void Sjf_Mangler2AudioProcessor::writeSampleInfoToXML()
     }
 }
 //==============================================================================
+void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
+{
+    
+//    m_chooser = std::make_unique<juce::FileChooser> ("Select a folder of Wave/Aiff files to load..." ,
+//                                                     juce::File{}, "*.aif, *.wav");
+//    m_chooser->browseForDirectory();
+//    auto chooserFlags = juce::FileBrowserComponent::openMode
+//    | juce::FileBrowserComponent::canSelectFiles;
+//
+//    m_chooser->launchAsync (chooserFlags, [ this ] (const juce::FileChooser& fc)
+//                            {
+//                                auto file = fc.getResult();
+//                                if (file == juce::File{}) { return; }
+//                                std::unique_ptr<juce::AudioFormatReader> reader (m_formatManager.createReaderFor (file));
+//                                if (reader.get() != nullptr)
+//                                {
+//                                }
+//                            });
+    
+}
+//==============================================================================
 void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
@@ -349,12 +372,14 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
                     }
 //                    sampleMangler2.loadSample( filePathParameter[ v ], v );
                 }
-                nSlicesParameter[ v ].referTo( parameters.state.getPropertyAsValue("numSlices"+juce::String( v ), nullptr ) );
-                int slices = nSlicesParameter[ v ].getValue();
-                sampleMangler2.setNumSlices( slices, v );
-                phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue("phaseRate"+juce::String( v ), nullptr ) );
-                int phaseRate = phaseRateMultiplierParameter[ v ].getValue();
-                sampleMangler2.setPhaseRateMultiplierIndex( phaseRate , v );
+                nSlicesParameter[ v ].referTo( parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr ) );
+//                int slices = nSlicesParameter[ v ].getValue();
+                sampleMangler2.setNumSlices( nSlicesParameter[ v ].getValue(), v );
+                phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr ) );
+//                int phaseRate = phaseRateMultiplierParameter[ v ].getValue();
+                sampleMangler2.setPhaseRateMultiplierIndex( phaseRateMultiplierParameter[ v ].getValue() , v );
+                sampleChoiceProbabilitiesParameter[ v ].referTo( parameters.state.getPropertyAsValue( "sampleChoiceProb"+juce::String( v ), nullptr ) );
+                sampleMangler2.setSampleChoiceProbabilities( sampleChoiceProbabilitiesParameter[ v ].getValue(), v );
             }
         }
 }
@@ -391,7 +416,7 @@ void Sjf_Mangler2AudioProcessor::readSampleInfoFromXML( const int voiceNumber )
 //==============================================================================
 void Sjf_Mangler2AudioProcessor::loadButtonClicked ( const int voiceNumber )
 {
-    if ( sampleMangler2.loadSample( voiceNumber ) )
+    if ( sampleMangler2.loadSample( voiceNumber ) ) 
     {
         readSampleInfoFromXML( voiceNumber );
     }
@@ -463,6 +488,7 @@ void Sjf_Mangler2AudioProcessor::setNumVoices( const int nVoices )
     filePathParameter.resize( nVoices );
     nSlicesParameter.resize( nVoices );
     phaseRateMultiplierParameter.resize( nVoices );
+    sampleChoiceProbabilitiesParameter.resize( nVoices );
 }
 
 //==============================================================================
