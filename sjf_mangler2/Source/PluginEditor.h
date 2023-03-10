@@ -63,7 +63,7 @@ private:
     std::unique_ptr<ButtonAttachment> randomOnLoopAttachment, hostSyncAttachment, playButtonAttachment;
     std::unique_ptr<ComboBoxAttachment> phaseRateMultiplierAttachment, interpolationTypeAttachment;
     
-    juce::String MAIN_TOOLTIP = "sjf_Mangler2: \nRandomised sample editor\n\n1) load a sample \n2) turn on play (NB if sync is set you need to start the transport) \n3) play with the controls to get randomised variations";
+    juce::String MAIN_TOOLTIP = "sjf_mangler2: \nRandomised sample editor\n\n1) load a sample \n2) turn on play (NB if sync is set you need to start the transport) \n3) play with the controls to get randomised variations\nmangler2 allows you to load multiple samples and have the random variations can include segments from each of these samples";
     
     //    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     

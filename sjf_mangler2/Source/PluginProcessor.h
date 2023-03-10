@@ -100,7 +100,7 @@ private:
     
     std::atomic<float>* randOnLoopParameter = nullptr;
     std::atomic<float>* syncToHostParameter = nullptr;
-//    std::atomic<float>* phaseRateMultiplierParameter = nullptr;
+    std::atomic<float>* phaseRateMultiplierParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
     
     std::atomic<float>* playStateParameter = nullptr;
@@ -110,7 +110,7 @@ private:
     std::vector< juce::Value > filePathParameter;
     std::vector< juce::Value > nSlicesParameter;
     std::vector< juce::Value > sampleChoiceProbabilitiesParameter;
-    std::vector< juce::Value > phaseRateMultiplierParameter;
+//    std::vector< juce::Value > phaseRateMultiplierParameter;
 //    std::vector< std::atomic<float>* > nSlicesParameter;
     //    std::atomic<int>*
     //==============================================================================

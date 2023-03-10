@@ -50,7 +50,7 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     syncToHostParameter = parameters.getRawParameterValue("syncToHost");
     playStateParameter = parameters.getRawParameterValue("play");
     
-//    phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
+    phaseRateMultiplierParameter = parameters.getRawParameterValue("phaseRateMultiplier");
     
     interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
     
@@ -61,12 +61,12 @@ Sjf_Mangler2AudioProcessor::Sjf_Mangler2AudioProcessor()
     {
         filePathParameter[ v ] = parameters.state.getPropertyAsValue("sampleFilePath" + juce::String( v ), nullptr, true);
         nSlicesParameter[ v ] = parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr, true );
-        phaseRateMultiplierParameter[ v ] = parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr, true );
+//        phaseRateMultiplierParameter[ v ] = parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr, true );
         sampleChoiceProbabilitiesParameter[ v ] = parameters.state.getPropertyAsValue("sampleChoiceProb"+juce::String( v ), nullptr, true );
     }
 //    nSlicesParameter = parameters.state.getPropertyAsValue("numSlices", nullptr, true );
     
-    sampleMangler2.initialise( getSampleRate() );
+    sampleMangler2.initialise( getSampleRate() ); 
     sampleMangler2.setNumSteps( *nStepsParameter );
     ////////////////////////////////////////
     ////////////////////////////////////////
@@ -265,7 +265,7 @@ void Sjf_Mangler2AudioProcessor::getStateInformation (juce::MemoryBlock& destDat
     {
         filePathParameter[ v ].setValue( sampleMangler2.getFilePath( v ) );
         nSlicesParameter[ v ].setValue( sampleMangler2.getNumSlices( v ) );
-        phaseRateMultiplierParameter[ v ].setValue( sampleMangler2.getPhaseRateMultiplierIndex( v ) );
+//        phaseRateMultiplierParameter[ v ].setValue( sampleMangler2.getPhaseRateMultiplierIndex( v ) );
         sampleChoiceProbabilitiesParameter[ v ].setValue( sampleMangler2.getSampleChoiceProbability( v ) );
     }
     
@@ -352,16 +352,28 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
     | juce::FileBrowserComponent::canSelectFiles
     | juce::FileBrowserComponent::canSelectMultipleItems;
 
-    m_chooser->launchAsync (chooserFlags, [ this ] (const juce::FileChooser& fc)
+    
+    bool wasPlaying = *playStateParameter;
+    
+    m_chooser->launchAsync (chooserFlags, [ this, wasPlaying ] (const juce::FileChooser& fc)
                             {
+                                *playStateParameter = false;
                                 auto results = fc.getResults();
-                                if ( results.size() == 0 ) { return; }
+                                if ( results.size() == 0 )
+                                {
+                                    *playStateParameter = wasPlaying;
+                                    return;
+                                }
 //                                if ( results == juce::File{} ) { return; }
                                 if ( results.getFirst().isDirectory() )
                                 {
                                     auto directory = results.getFirst();
                                     auto nFiles = directory.getNumberOfChildFiles( juce::File::findFiles, "*.aif, *.wav" );
-                                    if ( nFiles <= 0 ){ return; }
+                                    if ( nFiles <= 0 )
+                                    {
+                                        *playStateParameter = wasPlaying;
+                                        return;
+                                    }
                                     setNumVoices( nFiles );
                                     DBG( "Directory Name " << directory.getFileName() << " " <<  nFiles << " audio files" );
                                     auto samples = directory.findChildFiles( juce::File::findFiles, true, "*.aif, *.wav", juce::File::FollowSymlinks::no );
@@ -389,6 +401,7 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
                                 {
                                     readSampleInfoFromXML( v );
                                 }
+                                *playStateParameter = wasPlaying;
                             });
     
 }
@@ -417,9 +430,9 @@ void Sjf_Mangler2AudioProcessor::setStateInformation (const void* data, int size
                 nSlicesParameter[ v ].referTo( parameters.state.getPropertyAsValue( "numSlices"+juce::String( v ), nullptr ) );
 //                int slices = nSlicesParameter[ v ].getValue();
                 sampleMangler2.setNumSlices( nSlicesParameter[ v ].getValue(), v );
-                phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr ) );
+//                phaseRateMultiplierParameter[ v ].referTo( parameters.state.getPropertyAsValue( "phaseRate"+juce::String( v ), nullptr ) );
 //                int phaseRate = phaseRateMultiplierParameter[ v ].getValue();
-                sampleMangler2.setPhaseRateMultiplierIndex( phaseRateMultiplierParameter[ v ].getValue() , v );
+//                sampleMangler2.setPhaseRateMultiplierIndex( phaseRateMultiplierParameter[ v ].getValue() , v );
                 sampleChoiceProbabilitiesParameter[ v ].referTo( parameters.state.getPropertyAsValue( "sampleChoiceProb"+juce::String( v ), nullptr ) );
                 sampleMangler2.setSampleChoiceProbabilities( sampleChoiceProbabilitiesParameter[ v ].getValue(), v );
             }
@@ -510,9 +523,9 @@ void Sjf_Mangler2AudioProcessor::checkParameters()
     if (sampleMangler2.m_syncToHostFlag != *syncToHostParameter){
         sampleMangler2.m_syncToHostFlag = *syncToHostParameter;
     }
-//    if (sampleMangler2.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
-//        sampleMangler2.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
-//    }
+    if (sampleMangler2.getPhaseRateMultiplierIndex() != *phaseRateMultiplierParameter){
+        sampleMangler2.setPhaseRateMultiplierIndex(*phaseRateMultiplierParameter);
+    }
     if (sampleMangler2.m_canPlayFlag != *playStateParameter){
         sampleMangler2.m_canPlayFlag = *playStateParameter;
     }
@@ -530,7 +543,7 @@ void Sjf_Mangler2AudioProcessor::setNumVoices( const int nVoices )
     sampleMangler2.setNumVoices( nVoices );
     filePathParameter.resize( nVoices );
     nSlicesParameter.resize( nVoices );
-    phaseRateMultiplierParameter.resize( nVoices );
+//    phaseRateMultiplierParameter.resize( nVoices );
     sampleChoiceProbabilitiesParameter.resize( nVoices );
 }
 
@@ -551,9 +564,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_Mangler2AudioProcessor::
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "randomOnLoop", pIDVersionNumber }, "RandomOnLoop", true) );
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "play", pIDVersionNumber }, "Play", false) );
     params.add( std::make_unique<juce::AudioParameterBool> ( juce::ParameterID{ "syncToHost", pIDVersionNumber }, "SyncToHost", true) );
-//    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "phaseRateMultiplier", pIDVersionNumber }, "PhaseRateMultiplier", 1, 5, 3) );
+    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "phaseRateMultiplier", pIDVersionNumber }, "PhaseRateMultiplier", 1, 5, 3) );
     params.add( std::make_unique<juce::AudioParameterFloat> ( juce::ParameterID{ "fade", pIDVersionNumber }, "Fade", 0.01, 100, 1) );
-    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 2) );
+    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 6) );
     
 //    params.add( std::make_unique<juce::AudioParameterInt> ( juce::ParameterID{ "nVoices", pIDVersionNumber }, "NVoices", 1, 32, 2) );
     
