@@ -348,19 +348,23 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
                                                      juce::File{}, "*.aif, *.wav");
 //    m_chooser->browseForDirectory();
     auto chooserFlags = juce::FileBrowserComponent::openMode
-    | juce::FileBrowserComponent::canSelectDirectories;
+    | juce::FileBrowserComponent::canSelectDirectories
+    | juce::FileBrowserComponent::canSelectFiles
+    | juce::FileBrowserComponent::canSelectMultipleItems;
 
     m_chooser->launchAsync (chooserFlags, [ this ] (const juce::FileChooser& fc)
                             {
-                                auto file = fc.getResult();
-                                if (file == juce::File{}) { return; }
-                                
-                                auto nFiles = file.getNumberOfChildFiles( juce::File::findFiles, "*.aif, *.wav" );
-                                if ( nFiles > 0 )
+                                auto results = fc.getResults();
+                                if ( results.size() == 0 ) { return; }
+//                                if ( results == juce::File{} ) { return; }
+                                if ( results.getFirst().isDirectory() )
                                 {
+                                    auto directory = results.getFirst();
+                                    auto nFiles = directory.getNumberOfChildFiles( juce::File::findFiles, "*.aif, *.wav" );
+                                    if ( nFiles <= 0 ){ return; }
                                     setNumVoices( nFiles );
-                                    DBG( "Directory Name " << file.getFileName() << " " <<  nFiles << " audio files" );
-                                    auto samples = file.findChildFiles( juce::File::findFiles, true, "*.aif, *.wav", juce::File::FollowSymlinks::no );
+                                    DBG( "Directory Name " << directory.getFileName() << " " <<  nFiles << " audio files" );
+                                    auto samples = directory.findChildFiles( juce::File::findFiles, true, "*.aif, *.wav", juce::File::FollowSymlinks::no );
                                     for ( int s = 0; s < nFiles; s++ )
                                     {
                                         DBG( samples[ s ].getFileName() );
@@ -368,6 +372,22 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
                                         path.setValue( samples[ s ].getFullPathName() );
                                         sampleMangler2.loadSample( path, s );
                                     }
+                                }
+                                else
+                                {
+                                    auto nFiles = results.size();
+                                    setNumVoices( nFiles );
+                                    for ( int s = 0; s < nFiles; s++ )
+                                    {
+                                        DBG( results[ s ].getFileName() );
+                                        juce::Value path;
+                                        path.setValue( results[ s ].getFullPathName() );
+                                        sampleMangler2.loadSample( path, s );
+                                    }
+                                }
+                                for ( int v = 0; v < (int)nVoicesParameter.getValue(); v++ )
+                                {
+                                    readSampleInfoFromXML( v );
                                 }
                             });
     

@@ -13,7 +13,7 @@
 #define indent 10
 
 #define WIDTH potSize*4+potSize*5+indent*2
-#define HEIGHT potSize*3+textHeight*3 + indent
+#define HEIGHT textHeight*11 + indent*2
 //==============================================================================
 Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2AudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
 : AudioProcessorEditor (&p), valueTreeState (vts), audioProcessor (p)
@@ -290,12 +290,25 @@ void Sjf_Mangler2AudioProcessorEditor::timerCallback()
     auto nItems = voiceComboBox.getNumItems();
     auto selected = std::max( voiceComboBox.getSelectedId(), 1 ) ;
     auto nManglerVoices = audioProcessor.sampleMangler2.getNumVoices();
-    for ( int v = 0; v < nManglerVoices; v++ )
+    if ( nItems > nManglerVoices )
     {
-        juce::String filename = audioProcessor.sampleMangler2.getFileName( v ).isNotEmpty() ? audioProcessor.sampleMangler2.getFileName( v ) : "No sample Chosen";
-        if (v+1 <= nItems) { voiceComboBox.changeItemText( v+1, filename ); }
-        else { voiceComboBox.addItem( filename, v+1 ); }
+        voiceComboBox.clear();
+        for ( int v = 0; v < nManglerVoices; v++ )
+        {
+            juce::String filename = audioProcessor.sampleMangler2.getFileName( v ).isNotEmpty() ? audioProcessor.sampleMangler2.getFileName( v ) : "No sample Chosen";
+            voiceComboBox.addItem( filename, v+1 );
+        }
     }
+    else
+    {
+        for ( int v = 0; v < nManglerVoices; v++ )
+        {
+            juce::String filename = audioProcessor.sampleMangler2.getFileName( v ).isNotEmpty() ? audioProcessor.sampleMangler2.getFileName( v ) : "No sample Chosen";
+            if (v+1 <= nItems) { voiceComboBox.changeItemText( v+1, filename ); }
+            else { voiceComboBox.addItem( filename, v+1 ); }
+        }
+    }
+
     voiceComboBox.setSelectedId( selected );
     
     if ( nManglerVoices != sampleProbMultiSlider.getNumSliders() )
@@ -336,7 +349,7 @@ void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
 
     
     g.setColour( otherLookAndFeel.backGroundColour.withAlpha( 0.7f ) );
-    g.fillRect( voiceComboBox.getX(), voiceComboBox.getY(), voiceComboBox.getWidth() + loadButton.getWidth(), textHeight*2 );
+    g.fillRect( voiceComboBox.getX(), voiceComboBox.getY(), voiceComboBox.getWidth(), textHeight*3 );
     g.setColour (juce::Colours::white);
     g.drawFittedText("nSlices", 0, nSlicesNumBox.getY(), nSlicesNumBox.getX(), textHeight, juce::Justification::right, 1 );
     g.setColour( otherLookAndFeel.outlineColour );
@@ -365,14 +378,14 @@ void Sjf_Mangler2AudioProcessorEditor::resized()
     subDivProbSlider.setBounds(speedProbSlider.getX(), speedProbSlider.getBottom(), slideLength, textHeight);
     ampProbSlider.setBounds(subDivProbSlider.getX(), subDivProbSlider.getBottom(), slideLength, textHeight);
     stepShuffleProbSlider.setBounds(ampProbSlider.getX(), ampProbSlider.getBottom(), slideLength, textHeight);
-    sampleChoiceSlider.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom(), slideLength, textHeight);
+//  sampleChoiceSlider.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom(), slideLength, textHeight);
     
 //    auto mutiSliderWidth = std::min( slideLength, textHeight*sampleProbMultiSlider.getNumSliders() );
 //    auto mutiSliderWidth = textHeight * 10;
-    sampleProbMultiSlider.setBounds( revProbSlider.getRight() + indent, revProbSlider.getY(), slideLength, textHeight * 5 );
-    loadFolderButton.setBounds( sampleProbMultiSlider.getX(), sampleProbMultiSlider.getBottom(), sampleProbMultiSlider.getWidth(), textHeight );
     
-    randomAllButton.setBounds(sampleChoiceSlider.getX(), sampleChoiceSlider.getBottom() + indent, potSize, textHeight*2);
+
+    
+    randomAllButton.setBounds(stepShuffleProbSlider.getX(), stepShuffleProbSlider.getBottom() + indent, potSize, textHeight*2);
     randomOnLoopButton.setBounds(randomAllButton.getRight() + indent, randomAllButton.getBounds().getY(), potSize*3 - indent, textHeight*2);
     
     
@@ -383,13 +396,23 @@ void Sjf_Mangler2AudioProcessorEditor::resized()
     playButton.setBounds( randomOnLoopButton.getX(), randomOnLoopButton.getBottom(), randomOnLoopButton.getWidth()/2.0f, textHeight*3);
     hostSyncButton.setBounds( playButton.getRight(), playButton.getY(), playButton.getWidth(), playButton.getHeight() );
     
-    voiceComboBox.setBounds( indent, interpolationTypeBox.getBottom() + indent, hostSyncButton.getRight() - indent - 2*potSize, textHeight );
-    loadButton.setBounds( voiceComboBox.getRight(), voiceComboBox.getY(), potSize*2, textHeight );
-    nSlicesNumBox.setBounds(randomAllButton.getX(), voiceComboBox.getBottom(), potSize, textHeight);
-    phaseRateMultiplierBox.setBounds( nSlicesNumBox.getRight(), nSlicesNumBox.getY(), nSlicesNumBox.getWidth(), textHeight );
-    readSampleInfoButton.setBounds( phaseRateMultiplierBox.getRight(), phaseRateMultiplierBox.getY(), phaseRateMultiplierBox.getWidth(), textHeight );
+    sampleProbMultiSlider.setBounds( revProbSlider.getRight() + indent, revProbSlider.getY(), slideLength, textHeight * 5 );
     
-    tooltipsToggle.setBounds( readSampleInfoButton.getRight(), readSampleInfoButton.getY(), phaseRateMultiplierBox.getWidth(), textHeight );
+    
+    voiceComboBox.setBounds( sampleProbMultiSlider.getX(), sampleProbMultiSlider.getBottom()  + indent, sampleProbMultiSlider.getWidth(), textHeight );
+    
+    int w2 = voiceComboBox.getWidth()/3;
+    int w1 = voiceComboBox.getWidth() - 2*w2;
+    
+    int w0 = voiceComboBox.getWidth()/4;
+    
+    nSlicesNumBox.setBounds(sampleProbMultiSlider.getX() + w0, voiceComboBox.getBottom(), w0, textHeight);
+    phaseRateMultiplierBox.setBounds( nSlicesNumBox.getRight(), nSlicesNumBox.getY(), nSlicesNumBox.getWidth(), textHeight );
+    loadButton.setBounds( phaseRateMultiplierBox.getRight(), phaseRateMultiplierBox.getY(), w0, textHeight );
+    
+    loadFolderButton.setBounds( voiceComboBox.getX(), nSlicesNumBox.getBottom(), w1, textHeight );
+    readSampleInfoButton.setBounds( loadFolderButton.getRight(), loadFolderButton.getY(), w2, textHeight );
+    tooltipsToggle.setBounds( readSampleInfoButton.getRight(), readSampleInfoButton.getY(), w2, textHeight );
     //    sampleNameLabel.setBounds( indent, interpolationTypeBox.getBottom(), getWidth(), textHeight);
     tooltipLabel.setBounds( 0, HEIGHT, getWidth(), textHeight*6);
 }
