@@ -261,7 +261,7 @@ Sjf_Mangler2AudioProcessorEditor::Sjf_Mangler2AudioProcessorEditor (Sjf_Mangler2
         audioProcessor.loadFolderOfSamples();
     };
     loadFolderButton.setButtonText( "load samples" );
-    loadFolderButton.setTooltip("This allows you to load multiple samples, or an entire folder of samples. The number of voices will automatically be updated, and any previously saved information regarding the number of slices for each sample will also be loaded.\n\nNB This shouldn't cause any crashes/glitches... but it might");
+    loadFolderButton.setTooltip("This allows you to load multiple samples, or an entire folder of samples. The number of voices will automatically be updated, and any previously saved information regarding the number of slices for each sample will also be loaded.\n\nNB This shouldn't cause any crashes/glitches... but it might so you should probably stop playback before loading a load of new samples...");
     loadFolderButton.sendLookAndFeelChange();
     
     startTimer( 250 );

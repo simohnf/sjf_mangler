@@ -357,7 +357,7 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
     
     m_chooser->launchAsync (chooserFlags, [ this, wasPlaying ] (const juce::FileChooser& fc)
                             {
-                                *playStateParameter = false;
+                                sampleMangler2.m_canPlayFlag = *playStateParameter = false;
                                 auto results = fc.getResults();
                                 if ( results.size() == 0 )
                                 {
@@ -367,7 +367,7 @@ void Sjf_Mangler2AudioProcessor::loadFolderOfSamples ()
 //                                if ( results == juce::File{} ) { return; }
                                 if ( results.getFirst().isDirectory() )
                                 {
-                                    auto directory = results.getFirst();
+                                    auto directory = results.getFirst(); 
                                     auto nFiles = directory.getNumberOfChildFiles( juce::File::findFiles, "*.aif, *.wav" );
                                     if ( nFiles <= 0 )
                                     {
