@@ -327,9 +327,12 @@ void Sjf_Mangler2AudioProcessorEditor::timerCallback()
 void Sjf_Mangler2AudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-//    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    juce::Rectangle<int> r = { WIDTH, HEIGHT + tooltipLabel.getHeight() };
+#ifdef JUCE_DEBUG
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+#else
+    juce::Rectangle<int> r = { (int)( WIDTH ), (int)(HEIGHT + tooltipLabel.getHeight()) };
     sjf_makeBackground< 40 >( g, r );
+#endif
     
     //    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
     g.setColour (juce::Colours::white);
@@ -410,7 +413,7 @@ void Sjf_Mangler2AudioProcessorEditor::resized()
     int w2 = voiceComboBox.getWidth()/3;
     int w1 = voiceComboBox.getWidth() - 2*w2;
     
-    int w0 = voiceComboBox.getWidth()/4;
+//    int w0 = voiceComboBox.getWidth()/4;
     
     nSlicesNumBox.setBounds(sampleProbMultiSlider.getX() + w1, voiceComboBox.getBottom(), w2, textHeight);
 //    phaseRateMultiplierBox.setBounds( nSlicesNumBox.getRight(), nSlicesNumBox.getY(), nSlicesNumBox.getWidth(), textHeight );
