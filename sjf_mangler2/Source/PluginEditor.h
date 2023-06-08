@@ -10,9 +10,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "../../../sjf_audio/sjf_numBox.h"
-#include "../../../sjf_audio/sjf_LookAndFeel.h"
-#include "../../../sjf_audio/sjf_multislider.h"
+#include "../../sjf_audio/sjf_widgets.h"
+#include "../../sjf_audio/sjf_LookAndFeel.h"
 
 //==============================================================================
 /**

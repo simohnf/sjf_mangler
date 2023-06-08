@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 //#include <time.h>
 //#include <math.h>
-#include "../../../sjf_audio/sjf_samplerPoly.h"
+#include "../../sjf_audio/sjf_samplerPoly.h"
 
 //#define PI 3.14159265
 
